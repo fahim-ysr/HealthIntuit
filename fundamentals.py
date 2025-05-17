@@ -13,12 +13,13 @@ KEY = os.getenv("GROQ_API_KEY")
 
 
 # !Converting image to required format
+
 image_path = "sample_dandruff.jpg"
 image_file = open(image_path, "rb")
 encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
 
 
-# !Setting up Multimodal LLM
+# !Setting up Multimodal LLM to analyze image with text
 
 client = Groq(api_key= KEY)
 current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
