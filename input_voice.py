@@ -9,6 +9,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 from io import BytesIO
 import os
+from groq import Groq
 
 
 # Explicitly setting the full path to FFmpeg executables (To avoid errors)
@@ -58,8 +59,37 @@ def record(path, timeout= 20, phrase_time_limit=None):
     except Exception as e:
         logging.error(f"Error occured! {e}")
 
+audio_file = "patient_request.mp3"
+
 # Calling the function
-record(path= "patient_request.mp3")
+record(path= audio_file)
 
 
 # !Setting up speech-to-text SST model for transcription
+
+# Importing GROQ API Key
+                                                                         
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(".env.local"))
+KEY = os.getenv("GROQ_API_KEY")
+
+# Setting up Groq client
+client = Groq(api_key= KEY)
+
+# Importing OpenAI Whisper
+current_model = "whisper-large-v3-turbo"
+
+# Encoding the file for transcription in binary
+audio_file = open(audio_file, "rb")
+
+# Setting up transcription end point
+transcription = client.audio.transcriptions.create(
+    model = current_model,
+    file= audio_file,
+    # Specifying English since it support multiple languages
+    language= "en"
+)
+
+# Extracts the transcription of the audio file
+print(transcription.text)
