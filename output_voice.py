@@ -6,6 +6,9 @@ from elevenlabs.client import ElevenLabs
 import subprocess
 from pydub import AudioSegment
 
+
+# !Setting up Text-to-Speech Model
+
 def text_to_speech(response, path):
     language= "en"
     audio_obj = gTTS(
@@ -24,7 +27,7 @@ text = "Hello, testing, 1, 2, 3, 4, 5."
 # text_to_speech(response= text, path= "tts_testing.mp3")
 
 
-# !Setting up Text-to-Speech Model
+# !Using Model for text output to voice for simulating doctor's reply
 
 # Import ElevenLabs API Key
 from dotenv import load_dotenv
@@ -61,6 +64,3 @@ def text_to_speech_elevenlabs(response, path):
 
 # Testing the text_to_speech_elevenlabs
 text_to_speech_elevenlabs(text, path= "elabs_testing_autoplay.mp3")
-
-
-# !Using Model for text output to voice for simulating doctor's reply
