@@ -25,6 +25,7 @@ encoded_image = image_encode(image_path)
 
 # !Setting up Multimodal LLM to analyze image with text
 
+# This function analyzes image and user's query about the image
 def analyze_image_and_query(encoded_image, query, model):
     client = Groq(api_key= KEY)
     

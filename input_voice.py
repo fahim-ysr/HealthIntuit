@@ -74,22 +74,28 @@ from pathlib import Path
 load_dotenv(Path(".env.local"))
 KEY = os.getenv("GROQ_API_KEY")
 
-# Setting up Groq client
-client = Groq(api_key= KEY)
+
+def speech_to_text(model, path, api_key):
+
+    # Setting up Groq client
+    client = Groq(api_key= api_key)
+
+    # Encoding the file for transcription in binary
+    audio_file = open(path, "rb")
+
+    # Setting up transcription end point
+    transcription = client.audio.transcriptions.create(
+        model = current_model,
+        file= audio_file,
+        # Specifying English since it support multiple languages
+        language= "en"
+    )
+
+    # Returns the extracted transcription of the audio file
+    return transcription.text
 
 # Importing OpenAI Whisper
 current_model = "whisper-large-v3-turbo"
 
-# Encoding the file for transcription in binary
-audio_file = open(audio_file, "rb")
-
-# Setting up transcription end point
-transcription = client.audio.transcriptions.create(
-    model = current_model,
-    file= audio_file,
-    # Specifying English since it support multiple languages
-    language= "en"
-)
-
-# Extracts the transcription of the audio file
-print(transcription.text)
+# Testing the function
+print(speech_to_text(model= current_model, path= audio_file, api_key= KEY))
