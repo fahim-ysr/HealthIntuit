@@ -3,6 +3,8 @@ import os
 import elevenlabs
 from gtts import gTTS
 from elevenlabs.client import ElevenLabs
+import subprocess
+from pydub import AudioSegment
 
 def text_to_speech(response, path):
     language= "en"
@@ -19,7 +21,7 @@ def text_to_speech(response, path):
 
 # Testing the text_to_speech function
 text = "Hello, testing, 1, 2, 3, 4, 5."
-text_to_speech(response= text, path= "tts_testing.mp3")
+# text_to_speech(response= text, path= "tts_testing.mp3")
 
 
 # !Setting up Text-to-Speech Model
@@ -44,8 +46,21 @@ def text_to_speech_elevenlabs(response, path):
     # Saves the audio in the file path
     elevenlabs.save(audio, path)
 
+    # Converting MP3 to WAV for autoplay
+    wav_path= path.replace(".mp3", ".wav")
+    audio_segment= AudioSegment.from_mp3(path)
+    audio_segment.export(wav_path, format= "wav")
+
+    # Setting up autoplay upon calling the function
+    try:
+        subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{wav_path}").PlaySync();'])
+        os.remove(wav_path)
+    
+    except Exception as e:
+        print(f"An error has occured: {e}")
+
 # Testing the text_to_speech_elevenlabs
-text_to_speech_elevenlabs(text, path= "elabs_testing.mp3")
+text_to_speech_elevenlabs(text, path= "elabs_testing_autoplay.mp3")
 
 
 # !Using Model for text output to voice for simulating doctor's reply
