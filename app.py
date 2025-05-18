@@ -6,10 +6,13 @@ import os
 import gradio as gd
 
 
-#Importing models
+# !Importing STT and TTS models
+
 sst_model = "whisper-large-v3-turbo"    # Speech-to-text model
 tts_model = "meta-llama/llama-4-scout-17b-16e-instruct"     # Text-to-speech model
 
+
+# !Configuring main functionality of UI from the other files
 
 # This function processes data from the fundamentals, input_voice and output_voice files
 def main_functionality(image_path, audio_path):
@@ -23,19 +26,21 @@ def main_functionality(image_path, audio_path):
 
     # Setting up image and query Input (Patient's Input)
     if image_path:
-        response = analyze_image_and_query(
+        doctors_response = analyze_image_and_query(
             encoded_image= encoded_image,
             query= stt_output,
             model= tts_model
         )
     else:
-        response= "Need image to analyze!"
+        doctors_response= "Need image to analyze!"
 
     # Setting up Speech To Text (Doctor's Response)
-    doctor_voice = text_to_speech_elevenlabs(
-        response= "",
-        path= ""
+    doctors_voice = text_to_speech_elevenlabs(
+        response= doctors_response,
+        path= "doctors_response.mp3"
     )
+
+    return stt_output, doctors_response, doctors_voice
 
 
 # !UI Setup

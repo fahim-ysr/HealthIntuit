@@ -23,7 +23,7 @@ def text_to_speech(response, path):
     audio_obj.save(path)
 
 # Testing the text_to_speech function
-text = "Hello, testing, 1, 2, 3, 4, 5."
+# text = "Hello, testing, 1, 2, 3, 4, 5."
 # text_to_speech(response= text, path= "tts_testing.mp3")
 
 
@@ -63,4 +63,5 @@ def text_to_speech_elevenlabs(response, path):
         print(f"An error has occured: {e}")
 
 # Testing the text_to_speech_elevenlabs
+text = "Hello, testing, 1, 2, 3, 4, 5."
 text_to_speech_elevenlabs(text, path= "elabs_testing_autoplay.mp3")
