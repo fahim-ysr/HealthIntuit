@@ -99,5 +99,5 @@ def speech_to_text(model, path, api_key):
 # # *Testing*
 
 # # Importing OpenAI Whisper
-# current_model = "whisper-large-v3-turbo"
+current_model = "whisper-large-v3-turbo"
 # print(speech_to_text(model= current_model, path= audio_file, api_key= KEY))

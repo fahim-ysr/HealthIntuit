@@ -63,6 +63,6 @@ def analyze_image_and_query(encoded_image, query, model):
 
 # image_path = "sample_dandruff.jpg"
 # encoded_image = image_encode(image_path)
-# current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
+current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
 # query = "Is there something wrong with my face?"
 # print(analyze_image_and_query(encoded_image= encoded_image, query= query, model= current_model))

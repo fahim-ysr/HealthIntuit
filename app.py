@@ -1,7 +1,7 @@
 # Importing modules
-from fundamentals import *
-from input_voice import *
-from output_voice import *
+from fundamentals import image_encode, analyze_image_and_query
+from input_voice import record, speech_to_text, KEY
+from output_voice import text_to_speech_elevenlabs
 import os
 import gradio as gd
 
@@ -21,7 +21,7 @@ prompt= (
     your response. Your response should be in one long paragraph. Also always answer as if you are talking to a real person.
     Do not say 'In the image I see' but say 'So what I see, I presume you have .... '
     Dont respond as an AI model in markdown, your answer should mimic that of an actual doctor not an AI bot,
-    Keep your answer concise (max 2 sentences). No preamble, start your answer right away please
+    Keep your answer concise. No preamble, start your answer right away please
     """
     )
 
@@ -29,7 +29,7 @@ prompt= (
 # !Configuring main functionality of UI from the other files
 
 # This function processes data from the fundamentals, input_voice and output_voice files
-def main_functionality(image_path, audio_path):
+def main_functionality(audio_path, image_path):
     
     # Setting up the Speech To Text for extracting query (Patient's Input)
     stt_output = speech_to_text(
