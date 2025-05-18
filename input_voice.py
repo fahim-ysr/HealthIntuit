@@ -61,8 +61,9 @@ def record(path, timeout= 20, phrase_time_limit=None):
 
 audio_file = "patient_request.mp3"
 
-# Calling the function
-record(path= audio_file)
+
+# # *Testing*
+# record(path= audio_file)
 
 
 # !Setting up speech-to-text SST model for transcription
@@ -94,8 +95,9 @@ def speech_to_text(model, path, api_key):
     # Returns the extracted transcription of the audio file
     return transcription.text
 
-# Importing OpenAI Whisper
-current_model = "whisper-large-v3-turbo"
 
-# Testing the function
-print(speech_to_text(model= current_model, path= audio_file, api_key= KEY))
+# # *Testing*
+
+# # Importing OpenAI Whisper
+# current_model = "whisper-large-v3-turbo"
+# print(speech_to_text(model= current_model, path= audio_file, api_key= KEY))

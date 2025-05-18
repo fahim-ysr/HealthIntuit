@@ -20,16 +20,14 @@ def image_encode(image_path):
     encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
     return encoded_image
 
-image_path = "sample_dandruff.jpg"
-encoded_image = image_encode(image_path)
 
 # !Setting up Multimodal LLM to analyze image with text
 
 # This function analyzes image and user's query about the image
 def analyze_image_and_query(encoded_image, query, model):
+    
     client = Groq(api_key= KEY)
     
-
     # Setting up API call to Groq
     message = [
         {
@@ -61,8 +59,10 @@ def analyze_image_and_query(encoded_image, query, model):
     return string_content
 
 
-# Testing the model
+# # *Testing the model*
 
-current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
-query = "Is there something wrong with my face?"
-print(analyze_image_and_query(encoded_image= encoded_image, query= query, model= current_model))
+# image_path = "sample_dandruff.jpg"
+# encoded_image = image_encode(image_path)
+# current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
+# query = "Is there something wrong with my face?"
+# print(analyze_image_and_query(encoded_image= encoded_image, query= query, model= current_model))

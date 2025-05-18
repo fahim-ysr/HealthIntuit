@@ -22,7 +22,8 @@ def text_to_speech(response, path):
     # Saving audio object to the file path
     audio_obj.save(path)
 
-# Testing the text_to_speech function
+
+# # *Testing
 # text = "Hello, testing, 1, 2, 3, 4, 5."
 # text_to_speech(response= text, path= "tts_testing.mp3")
 
@@ -62,6 +63,7 @@ def text_to_speech_elevenlabs(response, path):
     except Exception as e:
         print(f"An error has occured: {e}")
 
-# Testing the text_to_speech_elevenlabs
-text = "Hello, testing, 1, 2, 3, 4, 5."
-text_to_speech_elevenlabs(text, path= "elabs_testing_autoplay.mp3")
+
+# # *Testing the text_to_speech_elevenlabs
+# text = "Hello, testing, 1, 2, 3, 4, 5."
+# text_to_speech_elevenlabs(text, path= "elabs_testing_autoplay.mp3")
