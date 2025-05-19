@@ -2,6 +2,7 @@
 from fundamentals import image_encode, analyze_image_and_query
 from input_voice import record, speech_to_text, KEY
 from output_voice import text_to_speech_elevenlabs, text_to_speech
+from prescription_extract import extract_prescription
 import os
 import gradio as gd
 from pydub import AudioSegment
@@ -76,9 +77,15 @@ def main_functionality(audio_path, image_path):
     sample_rate, audio_data = wavfile.read(temp_wav)
     os.remove(temp_wav)
 
+    # Extracting Prescription
+    prescription_text= extract_prescription(doctors_response)
+    prescription_path= "prescription.txt"
+    with open(prescription_path, "w") as p:
+        p.write(prescription_text)
+
 
     # return stt_output, doctors_response, doctors_voice
-    return stt_output, doctors_response, (sample_rate, audio_data)
+    return stt_output, doctors_response, (sample_rate, audio_data), prescription_text, prescription_path
 
 
 # !UI Setup
@@ -92,14 +99,17 @@ ui = gd.Interface(
     ],
 
     outputs= [
-        gd.Textbox(label= "Speech To Text"),
-        gd.Textbox(label= "Doctor's Response"),
-        gd.Audio(label= "Doctor's Voice", type= "numpy")
+        gd.Textbox(label= "Your Request"),
+        gd.Textbox(label= "Doctor's Diagonosis"),
+        gd.Audio(label= "Doctor's Voice", type= "numpy"),
+        gd.Textbox(label= "Prescription", lines= 5),
+        gd.File(label= "Download Prescription")
     ],
 
     title= "⚕️HealthIntuit: Your AI Medical Assistant",
     theme= gd.themes.Ocean(),
-    allow_flagging= "never"
+    allow_flagging= "never",
+    description= "Upload an image and describe your concern to the doctor"
 )
 
 ui.launch(debug= True)
