@@ -8,6 +8,43 @@ from pydub import AudioSegment
 import platform
 
 
+# !Setting up Text-to-Speech Model (Substitute of Elevenlabs)
+
+def text_to_speech(response, path):
+    language= "en"
+    audio_obj = gTTS(
+        text= response,
+        lang= language,
+        # For Canadian Accent
+        tld='ca',
+        slow= False
+    )
+
+    # Saving audio object to the file path
+    audio_obj.save(path)
+
+    # Converting MP3 to WAV for autoplay
+    wav_path= path.replace(".mp3", ".wav")
+    audio_segment= AudioSegment.from_mp3(path)
+    audio_segment.export(wav_path, format= "wav")
+
+    # Setting up autoplay upon calling the function
+    os_name = platform.system()
+    try:
+        # Autoplay compatibility for Windows
+        if os_name == "Windows":
+            subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{wav_path}").PlaySync();'])
+            os.remove(wav_path)
+        
+        # Autoplay compatibility for Linux
+        if os_name == "Linux":
+            subprocess.run(['aplay', wav_path])
+            os.remove(wav_path)
+    
+    except Exception as e:
+        print(f"An error has occured: {e}")
+
+
 # !Setting up Text-to-Speech model using ElevenLabs api
 
 # Import ElevenLabs API Key

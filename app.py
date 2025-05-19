@@ -1,7 +1,7 @@
 # Importing modules
 from fundamentals import image_encode, analyze_image_and_query
 from input_voice import record, speech_to_text, KEY
-from output_voice import text_to_speech_elevenlabs
+from output_voice import text_to_speech_elevenlabs, text_to_speech
 import os
 import gradio as gd
 from pydub import AudioSegment
@@ -47,17 +47,38 @@ def main_functionality(audio_path, image_path):
             model= tts_model
         )
     else:
-        doctors_response= "Need image to analyze!"
+        doctors_response= "Needs image and voice to analyze!"
 
     # Setting up Speech To Text (Doctor's Response)
     output_path= "doctors_response.mp3"
-    doctors_voice = text_to_speech_elevenlabs(
+    
+    # doctors_voice = text_to_speech_elevenlabs(
+    #     response= doctors_response,
+    #     path= output_path
+    # )
+
+    # Substitute
+    doctors_voice = text_to_speech(
         response= doctors_response,
         path= output_path
     )
 
+    # Reads the audio file as a tuple (sample_rate, data)
+    import numpy as np
+    from scipy.io import wavfile
+
+    # Converts MP3 to WAV for Scipy
+    temp_wav = "temp.wav"
+    audio_segment= AudioSegment.from_mp3(output_path)
+    audio_segment.export(temp_wav, format= "wav")
+
+    # Reading the WAV
+    sample_rate, audio_data = wavfile.read(temp_wav)
+    os.remove(temp_wav)
+
+
     # return stt_output, doctors_response, doctors_voice
-    return stt_output, doctors_response, doctors_voice
+    return stt_output, doctors_response, (sample_rate, audio_data)
 
 
 # !UI Setup
@@ -73,7 +94,7 @@ ui = gd.Interface(
     outputs= [
         gd.Textbox(label= "Speech To Text"),
         gd.Textbox(label= "Doctor's Response"),
-        gd.Audio(label= "Doctor's Response", type= "filepath")
+        gd.Audio(label= "Doctor's Voice", type= "numpy")
     ],
 
     title= "⚕️HealthIntuit: Your AI Medical Assistant",
