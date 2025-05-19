@@ -2,7 +2,7 @@
 from fundamentals import image_encode, analyze_image_and_query
 from input_voice import record, speech_to_text, KEY
 from output_voice import text_to_speech_elevenlabs, text_to_speech
-from prescription_extract import extract_prescription
+from prescription_extract import extract_prescription, analyze_prescription
 import os
 import gradio as gd
 from pydub import AudioSegment
@@ -78,7 +78,9 @@ def main_functionality(audio_path, image_path):
     os.remove(temp_wav)
 
     # Extracting Prescription
-    prescription_text= extract_prescription(doctors_response)
+    # prescription_text= extract_prescription(doctors_response)
+    
+    prescription_text= analyze_prescription(doctors_response)
     prescription_path= "prescription.txt"
     with open(prescription_path, "w") as p:
         p.write(prescription_text)
@@ -102,7 +104,7 @@ ui = gd.Interface(
         gd.Textbox(label= "Your Request"),
         gd.Textbox(label= "Doctor's Diagonosis"),
         gd.Audio(label= "Doctor's Voice", type= "numpy"),
-        gd.Textbox(label= "Prescription", lines= 5),
+        gd.Textbox(label= "Prescription", lines= 10),
         gd.File(label= "Download Prescription")
     ],
 
