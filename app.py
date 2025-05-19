@@ -4,6 +4,7 @@ from input_voice import record, speech_to_text, KEY
 from output_voice import text_to_speech_elevenlabs
 import os
 import gradio as gd
+from pydub import AudioSegment
 
 
 # !Importing STT and TTS models
@@ -49,11 +50,13 @@ def main_functionality(audio_path, image_path):
         doctors_response= "Need image to analyze!"
 
     # Setting up Speech To Text (Doctor's Response)
+    output_path= "doctors_response.mp3"
     doctors_voice = text_to_speech_elevenlabs(
         response= doctors_response,
-        path= "doctors_response.mp3"
+        path= output_path
     )
 
+    # return stt_output, doctors_response, doctors_voice
     return stt_output, doctors_response, doctors_voice
 
 
@@ -70,11 +73,13 @@ ui = gd.Interface(
     outputs= [
         gd.Textbox(label= "Speech To Text"),
         gd.Textbox(label= "Doctor's Response"),
-        gd.Audio("Sample_Output.mp3")
+        # gd.Audio(label= "Doctor's Response", type= "filepath")
+        gd.Audio("sample_out.mp3")
     ],
 
     title= "⚕️HealthIntuit: Your AI Medical Assistant",
-    theme= gd.themes.Ocean()
+    theme= gd.themes.Ocean(),
+    allow_flagging= "never"
 )
 
 ui.launch(debug= True)
