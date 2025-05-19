@@ -73,7 +73,8 @@ ui = gd.Interface(
         gd.Audio("Sample_Output.mp3")
     ],
 
-    title= "HealthIntuit: Your AI Medical Assistant"
+    title= "⚕️HealthIntuit: Your AI Medical Assistant",
+    theme= gd.themes.Ocean()
 )
 
 ui.launch(debug= True)

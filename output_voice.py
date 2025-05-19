@@ -7,28 +7,7 @@ import subprocess
 from pydub import AudioSegment
 
 
-# !Setting up Text-to-Speech Model
-
-def text_to_speech(response, path):
-    language= "en"
-    audio_obj = gTTS(
-        text= response,
-        lang= language,
-        # For Canadian Accent
-        tld='ca',
-        slow= False
-    )
-
-    # Saving audio object to the file path
-    audio_obj.save(path)
-
-
-# # *Testing
-# text = "Hello, testing, 1, 2, 3, 4, 5."
-# text_to_speech(response= text, path= "tts_testing.mp3")
-
-
-# !Using Model for text output to voice for simulating doctor's reply
+# !Setting up Text-to-Speech model using ElevenLabs api
 
 # Import ElevenLabs API Key
 from dotenv import load_dotenv
@@ -40,8 +19,8 @@ def text_to_speech_elevenlabs(response, path):
     client= ElevenLabs(api_key= KEY)
     audio= client.generate(
         text= response,
-        voice= "Freya",
-        # voice= "Matilda",
+        # voice= "Freya",
+        voice= "Jessica",
         output_format= "mp3_44100_128",
         # Currently using the most lifelike model with rich emotional expression
         model= "eleven_turbo_v2"
