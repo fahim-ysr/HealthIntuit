@@ -12,17 +12,17 @@ import os
 from groq import Groq
 
 
-# Explicitly setting the full path to FFmpeg executables (To avoid errors)
-# Installed FFmpeg locally from source website
+# # Explicitly setting the full path to FFmpeg executables (To avoid errors)
+# # Installed FFmpeg locally from source website
 
-ffmpeg_path = r"C:\ffmpeg\bin\ffmpeg.exe"
+# ffmpeg_path = r"C:\ffmpeg\bin\ffmpeg.exe"
 
-if os.path.exists(ffmpeg_path):
-    AudioSegment.converter = ffmpeg_path
-    AudioSegment.ffmpeg = ffmpeg_path
-    AudioSegment.ffprobe = r"C:\ffmpeg\bin\ffprobe.exe"
-else:
-    print(f"FFmpeg not found at {ffmpeg_path}. Please check the path.")
+# if os.path.exists(ffmpeg_path):
+#     AudioSegment.converter = ffmpeg_path
+#     AudioSegment.ffmpeg = ffmpeg_path
+#     AudioSegment.ffprobe = r"C:\ffmpeg\bin\ffprobe.exe"
+# else:
+#     print(f"FFmpeg not found at {ffmpeg_path}. Please check the path.")
 
 
 # !Setting up audio recorder (Configuration)

@@ -73,8 +73,7 @@ ui = gd.Interface(
     outputs= [
         gd.Textbox(label= "Speech To Text"),
         gd.Textbox(label= "Doctor's Response"),
-        # gd.Audio(label= "Doctor's Response", type= "filepath")
-        gd.Audio("sample_out.mp3")
+        gd.Audio(label= "Doctor's Response", type= "filepath")
     ],
 
     title= "⚕️HealthIntuit: Your AI Medical Assistant",

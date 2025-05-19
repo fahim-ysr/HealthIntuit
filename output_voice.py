@@ -5,6 +5,7 @@ from gtts import gTTS
 from elevenlabs.client import ElevenLabs
 import subprocess
 from pydub import AudioSegment
+import platform
 
 
 # !Setting up Text-to-Speech model using ElevenLabs api
@@ -35,9 +36,16 @@ def text_to_speech_elevenlabs(response, path):
     audio_segment.export(wav_path, format= "wav")
 
     # Setting up autoplay upon calling the function
+    os_name = platform.system()
     try:
-        subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{wav_path}").PlaySync();'])
-        os.remove(wav_path)
+        # Autoplay compatibility for Windows
+        if os_name == "Windows":
+            subprocess.run(['powershell', '-c', f'(New-Object Media.SoundPlayer "{wav_path}").PlaySync();'])
+            os.remove(wav_path)
+        
+        # Autoplay compatibility for Linux
+        if os_name == "Linux":
+            subprocess.run(['aplay', wav_path])
     
     except Exception as e:
         print(f"An error has occured: {e}")
