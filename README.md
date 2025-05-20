@@ -7,7 +7,6 @@
   <div class="container">
     <h1>HealthIntuit: - An AI-powered healthcare assistant</h1>
   </br>
-    <image src= "HI2.jpg" alt= "HealthIntuit Demo Image"></image>
     <h2>Executive Overview</h2>
     <p>
       HealthIntuit is a multimodal AI-powered web app that analyzes patient-submitted images and voice queries to generate preliminary medical insights and prescription drafts. Designed for educational purposes, it leverages Groq's ultra-fast LLMs and ElevenLabs' lifelike speech synthesis to simulate doctor-patient interactions while emphasizing the importance of professional consultation. The app streamlines triage workflows, reduces administrative burdens, and empowers patients with accessible preliminary guidance.
