@@ -42,7 +42,7 @@ KEY = os.getenv("GROQ_API_KEY")
 current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 # !This function analyzes doctor's response and converts into a medical prescription
-def analyze_prescription(doctors_response):
+def analyze_prescription(doctors_response, patient_name, current_date):
     client = Groq(api_key= KEY)
 
     # Setting up prompt for analyzing the prescription and formatting it in correct manner
@@ -51,8 +51,8 @@ def analyze_prescription(doctors_response):
         {doctors_response}
 
         Format as:
-        Patient Name: [Your Name]
-        Date: [Today's Date]
+        Patient Name: {patient_name}
+        Date: {current_date}
         
         Diagnosis: [Brief diagnosis]
         
@@ -65,7 +65,7 @@ def analyze_prescription(doctors_response):
         - [Lifestyle advice]
         - [Follow-up schedule]
         
-        Diagonosed by HealthIntuit
+        Diagonosed by ⚕️HealthIntuit
         
         Use bullet points, avoid markdown, and keep it clinically precise. No preamble, start your answer right away please"""
         )

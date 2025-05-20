@@ -6,6 +6,7 @@ from prescription_extract import extract_prescription, analyze_prescription
 import os
 import gradio as gd
 from pydub import AudioSegment
+from datetime import datetime
 
 
 # !Importing STT and TTS models
@@ -31,7 +32,14 @@ prompt= (
 # !Configuring main functionality of UI from the other files
 
 # This function processes data from the fundamentals, input_voice and output_voice files
-def main_functionality(audio_path, image_path):
+def main_functionality(name, audio_path, image_path):
+
+    # Doesn't allow to pass without name input
+    if not name:
+        raise gd.Error("Please enter your full name first!")
+    
+    # Gets the current date and time
+    current_date= datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     # Setting up the Speech To Text for extracting query (Patient's Input)
     stt_output = speech_to_text(
@@ -80,7 +88,7 @@ def main_functionality(audio_path, image_path):
     # Extracting Prescription
     # prescription_text= extract_prescription(doctors_response)
     
-    prescription_text= analyze_prescription(doctors_response)
+    prescription_text= analyze_prescription(doctors_response= doctors_response, patient_name= name, current_date=current_date)
     prescription_path= "prescription.txt"
     with open(prescription_path, "w") as p:
         p.write(prescription_text)
@@ -89,29 +97,44 @@ def main_functionality(audio_path, image_path):
     # return stt_output, doctors_response, doctors_voice
     return stt_output, doctors_response, (sample_rate, audio_data), prescription_text, prescription_path
 
-
 # !UI Setup
+with gd.Blocks(theme=gd.themes.Ocean()) as demo:
+    gd.Markdown(
+        "<h1 style='font-size:2.5em; text-align:center; margin-bottom: 0.5em;'>⚕️ HealthIntuit: Your AI Medical Assistant</h1>" \
+        "</br>"
+    )
 
-ui = gd.Interface(
-    fn= main_functionality,
-    inputs= [
-        # Setting up audio and image source
-        gd.Audio(sources= ["microphone"], type= "filepath"),
-        gd.Image(type= "filepath")
-    ],
+    # Full Name at the top
+    name_box = gd.Textbox(label="Full Name (required)", placeholder="Enter your full name here")
 
-    outputs= [
-        gd.Textbox(label= "Your Request"),
-        gd.Textbox(label= "Doctor's Diagonosis"),
-        gd.Audio(label= "Doctor's Voice", type= "numpy"),
-        gd.Textbox(label= "Prescription", lines= 10),
-        gd.File(label= "Download Prescription")
-    ],
+    # Two columns below: inputs (left), outputs (right)
+    with gd.Row():
 
-    title= "⚕️HealthIntuit: Your AI Medical Assistant",
-    theme= gd.themes.Ocean(),
-    allow_flagging= "never",
-    description= "Upload an image and describe your concern to the doctor"
-)
+        with gd.Column(scale=2):
+            audio_input = gd.Audio(sources=["microphone"], type="filepath", label="Describe your concern (voice)", interactive=False)
+            image_input = gd.Image(type="filepath", label="Upload a relevant image", interactive=False)
 
-ui.launch(debug= True)
+        with gd.Column(scale=2):
+            stt_output = gd.Textbox(label="Transcribed Patient Query")
+            doctors_response = gd.Textbox(label="Doctor's Analysis")
+            voice_output = gd.Audio(label="Doctor's Voice Response", type="numpy")
+            prescription_output = gd.Textbox(label="Prescription", lines=8)
+            download_btn = gd.File(label="Download Prescription", file_count="single")
+
+    # Submit button at the bottom
+    submit_btn = gd.Button("Analyze", variant="primary")
+
+    # Enable inputs only if name is entered
+    def enable_inputs(name):
+        is_enabled = bool(name.strip())
+        return gd.update(interactive=is_enabled), gd.update(interactive=is_enabled)
+    name_box.change(enable_inputs, inputs=name_box, outputs=[audio_input, image_input])
+
+    # Submit button triggers main functionality
+    submit_btn.click(
+        fn=main_functionality,
+        inputs=[name_box, audio_input, image_input],
+        outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn]
+    )
+
+demo.launch(debug=True)
