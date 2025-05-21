@@ -184,6 +184,8 @@
       <hr>
       For educational use only. Consult a licensed healthcare provider for medical advice.<br>
     </div>
+  </br>
+    </br>
   </div>
 </body>
 </html>
