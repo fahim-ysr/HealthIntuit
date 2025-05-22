@@ -100,8 +100,9 @@ def main_functionality(name, audio_path, image_path):
 # !UI Setup
 with gd.Blocks(theme=gd.themes.Ocean()) as demo:
     gd.Markdown(
-        "<h1 style='font-size:2.5em; text-align:center; margin-bottom: 0.5em;'>⚕️ HealthIntuit: Your AI Medical Assistant</h1>" \
-        "</br>"
+        "<h1 style='font-size:2.5em; text-align:center; margin-bottom: 0.5em;'>"
+        "⚕️ HealthIntuit: Your AI Medical Assistant</h1>"
+        "<p style='text-align:center; color: #666;'>For Educational Use Only</p>"
     )
 
     # Full Name at the top
