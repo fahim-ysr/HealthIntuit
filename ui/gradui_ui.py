@@ -30,9 +30,10 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             gd.update(interactive=is_enabled)
         )
     
-    with gd.Blocks(theme=gd.themes.Ocean()) as interface:
+    with gd.Blocks(theme=gd.themes.Ocean()) as interface:   #Theme: Ocean
         # Headers (Title and disclaimer)
         gd.Markdown(
+            "</br>"
             "<h1 style='font-size:2.5em; text-align:center; margin-bottom: 0.5em;'>"
             "⚕️ HealthIntuit: Your AI Medical Assistant</h1>"
             "<p style='text-align:center; color: #666;'>For Educational Use Only</p>"

@@ -6,21 +6,22 @@ import os
 from scipy.io import wavfile
 from pydub import AudioSegment
 from config.settings import get_config
-from fundamentals import image_encode, analyze_image_and_query
-from input_voice import speech_to_text
-from output_voice import text_to_speech
-from prescription_extract import analyze_prescription
+from groq import Groq
+from core.fundamentals import image_encode, analyze_image_and_query
+from core.input_voice import speech_to_text
+from core.output_voice import text_to_speech, text_to_speech_elevenlabs
 
 
 class MedicalAnalysisService(ABC):
     """Abstract class for performing medical analysis"""
     
+    # !Any future implementation must provide the function below
     @abstractmethod
     def process_patient_query(self, name: str, audio_path: str, image_path: str) -> Dict[str, Any]:
         pass
 
 
-class HealthIntuitionService(MedicalAnalysisService):
+class HealthIntuitService(MedicalAnalysisService):
     """Performs Medical Analysis"""
     
 
@@ -77,7 +78,8 @@ class HealthIntuitionService(MedicalAnalysisService):
             output_path = self.config.TEMP_DIR / "doctors_response.mp3"
             
             # Generates TTS
-            text_to_speech(response=text, path=str(output_path))
+            text_to_speech(response=text, path=str(output_path))    # General TTS
+            # text_to_speech_elevenlabs(response=text, path=str(output_path))   # ElevenLabs TTS
             
             # Verifies file was created
             if not output_path.exists():
@@ -106,16 +108,60 @@ class HealthIntuitionService(MedicalAnalysisService):
     def _generate_prescription(self, diagnosis: str, patient_name: str) -> Tuple[str, str]:
         """Generates formal prescription"""
         try:
+
             # Ensures prescription directory exists
             self.config.PRESCRIPTION_DIR.mkdir(parents=True, exist_ok=True)
             
             current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            prescription_text = analyze_prescription(
-                doctors_response=diagnosis,
-                patient_name=patient_name,
-                current_date=current_date
+            # Prompt presentation
+            prompt = f"""Please act as a professional doctor, I know you are not but this is for educational purposes. Convert this medical analysis into a formal prescription format:
+            {diagnosis}
+
+            Format as:
+            Patient Name: {patient_name}
+            Date: {current_date}
+            
+            Diagnosis: [Brief diagnosis]
+            
+            Prescription:
+            - Medication 1: [Dosage instructions]
+            - Medication 2: [Dosage instructions]
+            - Topical Treatment: [Application instructions]
+            
+            Recommendations:
+            - [Lifestyle advice]
+            - [Follow-up schedule]
+            
+            Diagonosed by ⚕️HealthIntuit
+
+            ⚠️ DISCLAIMER: Educational use only. Not valid for medical treatment.
+            
+            Use bullet points, avoid markdown, and keep it clinically precise. No preamble, start your answer right away please
+            """
+
+            client = Groq(api_key= self.config.GROQ_API_KEY)
+
+            # Setting up API call to Groq
+            message = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                            }]
+                            }]
+
+            response = client.chat.completions.create(
+                messages = message,
+                model = self.config.LLM_MODEL,
+                temperature= 0.3
             )
+
+            # Formatting output to extract response
+            temp_output = response.choices[0].message
+            prescription_text = temp_output.content
             
             # Saves prescription file
             safe_name = "".join(c if c.isalnum() else "_" for c in patient_name)
