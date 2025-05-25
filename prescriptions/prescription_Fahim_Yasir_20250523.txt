@@ -1,0 +1,19 @@
+Patient Name: Fahim Yasir
+Date: 2025-05-23 01:56:30
+
+Diagnosis: Dandruff (Seborrheic Dermatitis)
+
+Prescription:
+- Medication1: Zinc Pyrithione Shampoo 2% (use 1-2 times a week for 5-10 minutes before rinsing)
+- Medication2: None
+- Topical Treatment: Ketoconazole Shampoo 2% (use 1-2 times a week for 3-5 minutes before rinsing, may be used in place of Zinc Pyrithione Shampoo)
+
+Recommendations:
+- Reduce stress through relaxation techniques (e.g., meditation, deep breathing)
+- Use a gentle shampoo and conditioner suitable for your scalp condition
+- Avoid harsh hair products (e.g., those containing sulfates, parabens)
+- Follow-up in 2 weeks to assess response to treatment; if symptoms persist, consider prescription-strength shampoo or topical treatment
+
+Diagnosed by HealthIntuit
+
+DISCLAIMER: Educational use only. Not valid for medical treatment.

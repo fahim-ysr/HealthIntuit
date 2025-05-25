@@ -1,0 +1,18 @@
+Patient Name: Fahim Yasir
+Date: 2025-05-24 22:51:36
+
+Diagnosis: Acute Myocardial Infarction (Heart Attack)
+
+Prescription:
+- Medication1: Aspirin - 162mg chewable tablet immediately
+- Medication2: Nitroglycerin - 0.4mg sublingual tablet every 5 minutes for a maximum of 3 doses
+- Oxygen Therapy: Administer supplemental oxygen at 2-4 L/min via nasal cannula
+
+Recommendations:
+- Immediate hospitalization for further evaluation and potential interventions (e.g., angioplasty or thrombolysis)
+- Strict bed rest and minimization of physical exertion
+- Follow-up schedule: Continuous monitoring in the emergency department and subsequent evaluation by a cardiologist
+
+Diagnosed by HealthIntuit
+
+DISCLAIMER: Educational use only. Not valid for medical treatment.

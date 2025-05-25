@@ -1,0 +1,21 @@
+{
+  "app_title": "⚕️ HealthIntuit: Votre Assistant Médical IA",
+  "app_subtitle": "À des fins éducatives uniquement",
+  "language_selector": "Langue",
+  "full_name_label": "Nom complet (requis)",
+  "full_name_placeholder": "Entrez votre nom complet ici",
+  "audio_input_label": "Décrivez votre préoccupation (voix)",
+  "image_input_label": "Télécharger une image pertinente",
+  "transcribed_query_label": "Requête du patient transcrite",
+  "doctors_analysis_label": "Analyse du médecin",
+  "voice_response_label": "Réponse vocale du médecin",
+  "prescription_label": "Ordonnance",
+  "download_prescription_label": "Télécharger l'ordonnance",
+  "analyze_button": "Analyser",
+  "error_name_required": "Le nom du patient est requis",
+  "error_audio_required": "L'entrée audio est requise",
+  "error_image_required": "L'entrée image est requise",
+  "error_analysis_failed": "L'analyse a échoué: {error}",
+  "medical_prompt": "Veuillez agir comme un médecin professionnel, je sais que vous ne l'êtes pas mais c'est à des fins éducatives. Maintenant, qu'y a-t-il dans cette image fournie que c'est moi?. Trouvez-vous quelque chose de mal médicalement? Si vous faites un diagnostic différentiel, suggérez quelques remèdes. Ne pas ajouter de chiffres ou de caractères spéciaux dans votre réponse. Votre réponse doit être dans un long paragraphe. Répondez toujours comme si vous parliez à une vraie personne. Ne dites pas 'Dans l'image je vois' mais dites 'Donc ce que je vois, je présume que vous avez .... ' Ne répondez pas comme un modèle IA en markdown, votre réponse doit imiter celle d'un vrai médecin pas un bot IA, Gardez votre réponse concise. Pas de préambule, commencez votre réponse tout de suite s'il vous plaît",
+  "prescription_prompt": "Veuillez agir comme un médecin professionnel, je sais que vous ne l'êtes pas mais c'est à des fins éducatives. Convertissez cette analyse médicale en format d'ordonnance formelle: {diagnosis}\n\nFormat comme:\nNom du patient: {patient_name}\nDate: {current_date}\n\nDiagnostic: [Diagnostic bref]\n\nOrdonnance:\n- Médicament 1: [Instructions de dosage]\n- Médicament 2: [Instructions de dosage]\n- Traitement topique: [Instructions d'application]\n\nRecommandations:\n- [Conseils de style de vie]\n- [Calendrier de suivi]\n\nDiagnostiqué par ⚕️HealthIntuit\n\n⚠️ AVERTISSEMENT: Usage éducatif seulement. Non valide pour traitement médical.\n\nUtilisez des puces, évitez le markdown et gardez une précision clinique. Pas de préambule, commencez votre réponse tout de suite s'il vous plaît"
+}
