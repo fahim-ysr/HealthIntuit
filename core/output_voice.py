@@ -10,13 +10,13 @@ import platform
 
 # !Setting up Text-to-Speech Model (Substitute of Elevenlabs)
 
-def text_to_speech(response, path):
+def text_to_speech(response, path, lang="en"):
     language= "en"
     audio_obj = gTTS(
         text= response,
-        lang= language,
+        lang= lang,
         # For Canadian Accent
-        tld='ca',
+        tld='ca' if language == "en" else "com" ,
         slow= False
     )
 
@@ -53,12 +53,18 @@ from pathlib import Path
 load_dotenv(Path(".env.local"))
 KEY = os.getenv("ELEVENLABS_API_KEY")
 
-def text_to_speech_elevenlabs(response, path):
+def text_to_speech_elevenlabs(response, path, lang= "en"):
     client= ElevenLabs(api_key= KEY)
+
+    voice_map= {
+        "en": "Jessica",
+        "fr": "Freya"
+    }
+
     audio= client.generate(
         text= response,
         # voice= "Freya",
-        voice= "Jessica",
+        voice= voice_map.get(lang, "Jessica"),
         output_format= "mp3_44100_128",
         # Currently using the most lifelike model with rich emotional expression
         model= "eleven_turbo_v2"

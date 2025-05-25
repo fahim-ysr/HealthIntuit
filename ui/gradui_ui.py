@@ -8,7 +8,6 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     """Creates Gradio UI with multilingual support"""
     lang_manager = get_language_manager()
     
-
     def handle_submission(name: str, audio_path: str, image_path: str) -> Tuple[str, str, Any, str, str]:
         """Handles form submission with error handling"""
         try:

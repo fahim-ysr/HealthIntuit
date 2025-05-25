@@ -76,7 +76,7 @@ load_dotenv(Path(".env.local"))
 KEY = os.getenv("GROQ_API_KEY")
 
 
-def speech_to_text(model, path, api_key):
+def speech_to_text(model, path, api_key, language="en"):
 
     # Setting up Groq client
     client = Groq(api_key= api_key)
@@ -89,7 +89,7 @@ def speech_to_text(model, path, api_key):
         model = current_model,
         file= audio_file,
         # Specifying English since it support multiple languages
-        language= "en"
+        language=language
     )
 
     # Returns the extracted transcription of the audio file

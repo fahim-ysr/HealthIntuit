@@ -45,12 +45,16 @@ class HealthIntuitService(MedicalAnalysisService):
     
 
     def _transcribe_audio(self, audio_path: str) -> str:
-        """Transcribes patient's voice to text (Speech-To-Text)"""
+        """Transcribes patient's voice to text (Speech-To-Text) in current language"""
         try:
+            # Gets current language from language manager
+            current_lang = self.lang_manager.current_language
+
             return speech_to_text(
-                model=self.config.STT_MODEL,
-                path=audio_path,
-                api_key=self.config.GROQ_API_KEY
+                model= self.config.STT_MODEL,
+                path= audio_path,
+                api_key= self.config.GROQ_API_KEY,
+                language= current_lang
             )
         except Exception as e:
             raise Exception(f"Patient's audio transcription failed: {str(e)}")
@@ -80,10 +84,13 @@ class HealthIntuitService(MedicalAnalysisService):
             self.config.TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
             output_path = self.config.TEMP_DIR / "doctors_response.mp3"
+
+            # Gets current language
+            current_lang = self.lang_manager.current_language
             
             # Generates TTS
-            text_to_speech(response=text, path=str(output_path))    # General TTS
-            # text_to_speech_elevenlabs(response=text, path=str(output_path))   # ElevenLabs TTS
+            text_to_speech(response=text, path=str(output_path), lang=current_lang)    # General TTS
+            # text_to_speech_elevenlabs(response=text, path=str(output_path), lang= current_lang)   # ElevenLabs TTS
             
             # Verifies file was created
             if not output_path.exists():
