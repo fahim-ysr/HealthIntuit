@@ -6,3 +6,5 @@ env
 prescription.txt
 */__pycache__
 __pycache__
+prescriptions
+temp

@@ -10,6 +10,7 @@ from groq import Groq
 from core.fundamentals import image_encode, analyze_image_and_query
 from core.input_voice import speech_to_text
 from core.output_voice import text_to_speech, text_to_speech_elevenlabs
+from config.languages import get_language_manager
 
 
 class MedicalAnalysisService(ABC):
@@ -28,18 +29,19 @@ class HealthIntuitService(MedicalAnalysisService):
     # Constructor function
     def __init__(self):
         self.config = get_config()
+        self.lang_manager = get_language_manager()
     
 
     def _validate_inputs(self, name: str, audio_path: str, image_path: str) -> None:
-        """Validates name, image and audio inputs"""
+        """Validates name, image and audio inputs with localized errors"""
         if not name or not name.strip():
-            raise ValueError("Patient name is required")
+            raise ValueError(self.lang_manager.get_text("error_name_required"))
         
         if not audio_path:
-            raise ValueError("Audio input is required")
+            raise ValueError(self.lang_manager.get_text("error_audio_required"))
             
         if not image_path:
-            raise ValueError("Image input is required")
+            raise ValueError(self.lang_manager.get_text("error_image_required"))
     
 
     def _transcribe_audio(self, audio_path: str) -> str:
@@ -55,10 +57,11 @@ class HealthIntuitService(MedicalAnalysisService):
     
 
     def _analyze_medical_image(self, image_path: str, query: str) -> str:
-        """Analyzes medical image with patient query"""
+        """Analyzes medical image with patient query using localized prompt"""
         try:
             encoded_image = image_encode(image_path)
-            full_query = f"{self.config.MEDICAL_PROMPT}\n{query}"
+            localized_prompt = self.config.get_medical_prompt()
+            full_query = f"{localized_prompt}\n{query}"
             
             return analyze_image_and_query(
                 encoded_image=encoded_image,
@@ -67,6 +70,7 @@ class HealthIntuitService(MedicalAnalysisService):
             )
         except Exception as e:
             raise Exception(f"Image analysis failed: {str(e)}")
+    
     
 
     def _generate_voice_response(self, text: str) -> Tuple[int, Any]:
@@ -106,69 +110,36 @@ class HealthIntuitService(MedicalAnalysisService):
         
     
     def _generate_prescription(self, diagnosis: str, patient_name: str) -> Tuple[str, str]:
-        """Generates formal prescription"""
+        """Generates formal prescription with localized prompt"""
         try:
-
-            # Ensures prescription directory exists
             self.config.PRESCRIPTION_DIR.mkdir(parents=True, exist_ok=True)
             
             current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # Prompt presentation
-            prompt = f"""Please act as a professional doctor, I know you are not but this is for educational purposes. Convert this medical analysis into a formal prescription format:
-            {diagnosis}
+            # Uses localized prescription prompt
+            prompt = self.config.get_prescription_prompt(diagnosis, patient_name, current_date)
 
-            Format as:
-            Patient Name: {patient_name}
-            Date: {current_date}
-            
-            Diagnosis: [Brief diagnosis]
-            
-            Prescription:
-            - Medication 1: [Dosage instructions]
-            - Medication 2: [Dosage instructions]
-            - Topical Treatment: [Application instructions]
-            
-            Recommendations:
-            - [Lifestyle advice]
-            - [Follow-up schedule]
-            
-            Diagonosed by ⚕️HealthIntuit
+            client = Groq(api_key=self.config.GROQ_API_KEY)
 
-            ⚠️ DISCLAIMER: Educational use only. Not valid for medical treatment.
-            
-            Use bullet points, avoid markdown, and keep it clinically precise. No preamble, start your answer right away please
-            """
-
-            client = Groq(api_key= self.config.GROQ_API_KEY)
-
-            # Setting up API call to Groq
-            message = [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                            }]
-                            }]
+            message = [{
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}]
+            }]
 
             response = client.chat.completions.create(
-                messages = message,
-                model = self.config.LLM_MODEL,
-                temperature= 0.3
+                messages=message,
+                model=self.config.LLM_MODEL,
+                temperature=0.3
             )
 
-            # Formatting output to extract response
-            temp_output = response.choices[0].message
-            prescription_text = temp_output.content
+            prescription_text = response.choices[0].message.content
             
             # Saves prescription file
             safe_name = "".join(c if c.isalnum() else "_" for c in patient_name)
             filename = f"prescription_{safe_name}_{datetime.now().strftime('%Y%m%d')}.txt"
             prescription_path = self.config.PRESCRIPTION_DIR / filename
             
-            with open(prescription_path, "w") as f:
+            with open(prescription_path, "w", encoding='utf-8') as f:
                 f.write(prescription_text)
             
             return prescription_text, str(prescription_path)
