@@ -14,6 +14,8 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     global follow_up_service
     follow_up_service= None
 
+    print("DEBUG: Follow-up service initialized as None - chat should be hidden")
+
     # JavaScript to set light mode as default
     default_light_js = """
     function() {
@@ -46,14 +48,65 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     #image-gallery img:hover {
         transform: scale(1.05);
     }
-    """
     
+    /* Fixed Popup Modal Styles - Remove display: flex !important */
+    .popup-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        z-index: 1000 !important;
+        /* REMOVED: display: flex !important; */
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Add this new rule for when popup is visible */
+    .popup-overlay[style*="display: block"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .popup-chatbot {
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+        width: 500px !important;
+        max-height: 600px !important;
+        padding: 20px !important;
+        max-width: 90vw !important;
+    }
+
+    .chat-toggle-btn {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 24px !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        z-index: 999 !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .chat-toggle-btn:hover {
+        transform: scale(1.1) !important;
+    }
+    """
+
 
     def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str, gd.update]:
-        """Handles form submission and follow-up chat with error handling"""
+        """Handles form submission and enables follow up chat button"""
         
         try:
-
             # Extracts file paths from uploaded files
             if image_files:
                 if isinstance(image_files, list):
@@ -81,7 +134,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 result["voice_response"],
                 result["prescription_text"],
                 result["prescription_file"],
-                gd.update(visible=True),     # Shows up the follow up section
+                gd.update(visible=True),     # Shows up the follow up section after successful completion
             )
         
         except Exception as e:
@@ -205,27 +258,36 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 voice_output = gd.Audio(label=lang_manager.get_text("voice_response_label"), type="numpy")
                 prescription_output = gd.Textbox(label=lang_manager.get_text("prescription_label"), lines=8)
                 download_btn = gd.File(label=lang_manager.get_text("download_prescription_label"), file_count="single")
-
-                # Follow-up section (initially hidden)
-                with gd.Column(visible=False) as follow_up_section:
-                    gd.Markdown("### 💬 Ask Follow-up Questions")
-
-                    chatbot = gd.Chatbot(
-                        label="Follow-up Chat with Doctor",
-                        height=300,
-                        show_label=True
-                    )
-
-                    follow_up_input = gd.Textbox(
-                        label="Ask about your diagnosis or prescription",
-                        placeholder="e.g., How long should I take this medication?",
-                        lines=2
-                    )
-
-                    follow_up_btn = gd.Button("Ask Question", variant="secondary")
         
         # Submit button
         submit_btn = gd.Button(lang_manager.get_text("analyze_button"), variant="primary")
+
+        # Floating chat button (initially hidden)
+        chat_toggle_btn = gd.Button(
+            "💬", 
+            elem_classes=["chat-toggle-btn"],
+            visible=False,
+            variant="primary"
+        )
+
+        # Popup chatbot modal (initially hidden)
+        with gd.Column(visible=False, elem_classes=["popup-overlay"]) as chat_popup:
+            with gd.Column(elem_classes=["popup-chatbot"]):
+                with gd.Row():
+                    gd.Markdown("### 💬 Ask Follow-up Questions")
+                    close_btn = gd.Button("✕", size="sm", variant="secondary")
+                
+                chatbot = gd.Chatbot(
+                    label="Chat with Doctor",
+                    height=350,
+                    show_label=False,
+                )
+                follow_up_input = gd.Textbox(
+                    label="",
+                    placeholder="Ask about your diagnosis or prescription...",
+                    lines=2
+                )
+                follow_up_btn = gd.Button("Send", variant="primary")
         
         # Event handlers
         
@@ -252,7 +314,18 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         submit_btn.click(
             handle_submission,
             inputs=[name_box, audio_input, image_input],
-            outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn, follow_up_section]
+            outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn, chat_toggle_btn]
+        )
+
+        # Chat popup controls
+        chat_toggle_btn.click(
+            lambda: gd.update(visible=True),
+            outputs=[chat_popup]
+        )
+
+        close_btn.click(
+            lambda: gd.update(visible=False),
+            outputs=[chat_popup]
         )
 
         # Follow-up chat functionality
@@ -261,7 +334,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             inputs=[follow_up_input, chatbot],
             outputs=[follow_up_input, chatbot]
         )
-        
+
         follow_up_input.submit(
             handle_follow_up,
             inputs=[follow_up_input, chatbot],
