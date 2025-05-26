@@ -19,10 +19,43 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     }
     """
     
-    def handle_submission(name: str, audio_path: str, image_path: str) -> Tuple[str, str, Any, str, str]:
+    custom_css = """
+    #image-gallery {
+        border: 2px dashed #e5e7eb;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    #image-gallery .grid-wrap {
+        gap: 10px;
+    }
+
+    #image-gallery img {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    #image-gallery img:hover {
+        transform: scale(1.05);
+    }
+    """
+
+
+    def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str]:
         """Handles form submission with error handling"""
         try:
-            result = process_function(name, audio_path, image_path)
+
+            # Extracts file paths from uploaded files
+            if image_files:
+                if isinstance(image_files, list):
+                    image_paths = [file.name for file in image_files if file is not None]
+                else:
+                    image_paths = [image_files.name] if image_files else []
+            else:
+                image_paths = []
+
+            result = process_function(name, audio_path, image_paths)
             return (
                 result["transcription"],
                 result["diagnosis"],
@@ -59,9 +92,18 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             gd.update(label=lang_manager.get_text("download_prescription_label")),
             gd.update(value=lang_manager.get_text("analyze_button"))
             ]
+    
+    def update_image_preview(files):
+        """Update image preview gallery when files are uploaded"""
+        if files and len(files) > 0:
+            # Extracts file paths for gallery display
+            image_paths = [file.name for file in files if file is not None]
+            return gd.update(value=image_paths, visible=True)
+        else:
+            return gd.update(value=[], visible=False)
 
     
-    with gd.Blocks(theme=gd.themes.Ocean(), js= default_light_js) as interface:   #Theme: Ocean
+    with gd.Blocks(theme=gd.themes.Ocean(), js= default_light_js, css= custom_css) as interface:   #Theme: Ocean
         #  Compact language selector at top-right
         with gd.Row():
             gd.HTML("")  # Spacer
@@ -97,10 +139,26 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                     label=lang_manager.get_text("audio_input_label"),
                     interactive=False
                 )
-                image_input = gd.Image(
-                    type="filepath",
+
+                # Allows multiple images
+                image_input = gd.File(
+                    file_count= "multiple",
+                    file_types= ["image"],
                     label=lang_manager.get_text("image_input_label"),
                     interactive=False
+                )
+
+                # Image preview gallery (slideshow)
+                image_gallery = gd.Gallery(
+                    label="Uploaded Images Preview",
+                    show_label=True,
+                    elem_id="image-gallery",
+                    columns=2,
+                    rows=2,
+                    height="300px",
+                    visible=False,
+                    allow_preview=True,
+                    show_share_button=False
                 )
             
             # Output column
@@ -115,6 +173,14 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         submit_btn = gd.Button(lang_manager.get_text("analyze_button"), variant="primary")
         
         # Event handlers
+        
+        # Image preview update when files are uploaded
+        image_input.change(
+            update_image_preview,
+            inputs=[image_input],
+            outputs=[image_gallery]
+        )
+
         language_selector.change(
             update_language,
             inputs=[language_selector],

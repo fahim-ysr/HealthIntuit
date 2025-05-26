@@ -32,7 +32,7 @@ class HealthIntuitService(MedicalAnalysisService):
         self.lang_manager = get_language_manager()
     
 
-    def _validate_inputs(self, name: str, audio_path: str, image_path: str) -> None:
+    def _validate_inputs(self, name: str, audio_path: str, image_paths) -> None:
         """Validates name, image and audio inputs with localized errors"""
         if not name or not name.strip():
             raise ValueError(self.lang_manager.get_text("error_name_required"))
@@ -40,8 +40,17 @@ class HealthIntuitService(MedicalAnalysisService):
         if not audio_path:
             raise ValueError(self.lang_manager.get_text("error_audio_required"))
             
-        if not image_path:
+        if not image_paths:
             raise ValueError(self.lang_manager.get_text("error_image_required"))
+        
+        # Converts single image to list for consistency
+        if isinstance(image_paths, str):
+            image_paths = [image_paths]
+    
+        # Validates image files
+        for img_path in image_paths:
+            if not os.path.exists(img_path):
+                raise ValueError(f"Image file not found: {img_path}")
     
 
     def _transcribe_audio(self, audio_path: str) -> str:
@@ -60,20 +69,68 @@ class HealthIntuitService(MedicalAnalysisService):
             raise Exception(f"Patient's audio transcription failed: {str(e)}")
     
 
-    def _analyze_medical_image(self, image_path: str, query: str) -> str:
-        """Analyzes medical image with patient query using localized prompt"""
+    def _analyze_medical_images(self, image_paths, query: str) -> str:
+        """Analyzes multiple medical images with patient query"""
         try:
-            encoded_image = image_encode(image_path)
-            localized_prompt = self.config.get_medical_prompt()
-            full_query = f"{localized_prompt}\n{query}"
+
+            # Converts single image to list for consistency
+            if isinstance(image_paths, str):
+                image_paths= [image_paths]
+
+            combined_analysis= []
+
+            for i, image_path in enumerate(image_paths, 1):
+                try:
+                    encoded_image = image_encode(image_path)
+                    localized_prompt = self.config.get_medical_prompt()
+
+                    # Adds image context to prompt
+                    image_specific_query= f"{localized_prompt}\n\nImage {i} of {len(image_paths)}: {query}"
+                    
+                    analysis= analyze_image_and_query(
+                        encoded_image=encoded_image,
+                        query=image_specific_query,
+                        model=self.config.LLM_MODEL
+                        )
+                    
+                    combined_analysis.append(f"**Analysis for Image {i}:**\n{analysis}")
             
-            return analyze_image_and_query(
-                encoded_image=encoded_image,
-                query=full_query,
-                model=self.config.LLM_MODEL
-            )
+                except Exception as e:
+                    raise Exception(f"**Error analyzing Image {i}:** {str(e)}")
+                
+            # Combines all analyses
+            full_analysis= "\n\n".join(combined_analysis)
+
+            # Adds a summary if multiple images are uploaded
+            if len(image_paths) > 1:
+
+                # summary_prompt = f"""Please act as a professional doctor, I know you are not but this is for educational purposes.  Based on the following multiple image analyses, provide a clinical correlation and differential diagnosis:\n\n{full_analysis}\n\nProvide: 1) Primary diagnosis with supporting findings, 2) Differential diagnoses to consider, 3) Recommended next steps or referrals. Also always answer as if you are talking to a real person. Do not say 'In the image I see' but say 'So what I see, I presume you have .... '. Don't respond as an AI model in markdown, your answer should mimic that of an actual doctor not an AI bot, Keep your answer concise. No preamble, start your answer right away please"""
+
+                summary_prompt = f"""Please act as a professional doctor, I know you are not but this is for educational purposes. You are a doctor reviewing multiple images from the same patient. Here are your individual findings:\n\n{full_analysis}\n\n Provide a brief clinical correlation that ties these findings together. Begin naturally with phrases like "To sum up," or "Overall," and focus on the key clinical insights without restating individual image details. Provide: 1) Primary diagnosis with supporting findings, 2) Differential diagnoses to consider, 3) Recommended next steps or referrals. Also always answer as if you are talking to a real person. Do not say 'In the image I see' but say 'So what I see, I presume you have .... '. Don't respond as an AI model in markdown, your answer should mimic that of an actual doctor not an AI bot, Keep your answer concise. No preamble, start your answer right away please"""
+
+                # Generate summary using AI
+                from groq import Groq
+                client = Groq(api_key=self.config.GROQ_API_KEY)
+                
+                message = [{
+                    "role": "user", 
+                    "content": [{"type": "text", "text": summary_prompt}]
+                }]
+                
+                response = client.chat.completions.create(
+                    messages=message,
+                    model=self.config.LLM_MODEL,
+                    temperature=0.3
+                )
+                
+                summary = response.choices[0].message.content
+                full_analysis += f"\n\n**Overall Medical Summary:**\n{summary}"
+            
+            return full_analysis
+            
         except Exception as e:
-            raise Exception(f"Image analysis failed: {str(e)}")
+            raise Exception(f"Multiple image analysis failed: {str(e)}")
+                
     
     
 
@@ -155,16 +212,16 @@ class HealthIntuitService(MedicalAnalysisService):
             raise Exception(f"Prescription generation failed: {str(e)}")
     
 
-    def process_patient_query(self, name: str, audio_path: str, image_path: str) -> Dict[str, Any]:
+    def process_patient_query(self, name: str, audio_path: str, image_paths) -> Dict[str, Any]:
         """Main processing pipeline"""
-        self._validate_inputs(name, audio_path, image_path)
+        self._validate_inputs(name, audio_path, image_paths)
         
         try:
             # Step 1: Transcribes patient's query audio
             transcription = self._transcribe_audio(audio_path)
             
             # Step 2: Analyzes image with transcription
-            diagnosis = self._analyze_medical_image(image_path, transcription)
+            diagnosis = self._analyze_medical_images(image_paths, transcription)
             
             # Step 3: Generates doctor's voice response
             sample_rate, audio_data = self._generate_voice_response(diagnosis)
