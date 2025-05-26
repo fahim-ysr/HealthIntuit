@@ -2,11 +2,17 @@
 import gradio as gd
 from typing import Callable, Tuple, Any
 from config.languages import get_language_manager
+from services.medical_services import FollowUpService
+from config.settings import get_config
 
 
 def create_interface(process_function: Callable) -> gd.Blocks:
-    """Creates Gradio UI with multilingual support"""
+    """Creates Gradio UI with multilingual support and follow-up chat capabilities"""
     lang_manager = get_language_manager()
+
+    # Initialize global follow_up_service
+    global follow_up_service
+    follow_up_service= None
 
     # JavaScript to set light mode as default
     default_light_js = """
@@ -19,6 +25,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     }
     """
     
+    # For image presentation
     custom_css = """
     #image-gallery {
         border: 2px dashed #e5e7eb;
@@ -40,10 +47,11 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         transform: scale(1.05);
     }
     """
+    
 
-
-    def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str]:
-        """Handles form submission with error handling"""
+    def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str, gd.update]:
+        """Handles form submission and follow-up chat with error handling"""
+        
         try:
 
             # Extracts file paths from uploaded files
@@ -56,16 +64,45 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 image_paths = []
 
             result = process_function(name, audio_path, image_paths)
+
+            # Initializes follow-up service with context and stores in global variable (Since this function only supports 6 inputs)
+            global follow_up_service
+            follow_up_service = FollowUpService(get_config(), lang_manager)
+
+            follow_up_service.initialize_follow_up(
+                result["diagnosis"],
+                result["prescription_text"],
+                name
+            )
+            
             return (
                 result["transcription"],
                 result["diagnosis"],
                 result["voice_response"],
                 result["prescription_text"],
-                result["prescription_file"]
+                result["prescription_file"],
+                gd.update(visible=True),     # Shows up the follow up section
             )
+        
         except Exception as e:
             error_msg = lang_manager.get_text("error_analysis_failed").format(error=str(e))
             raise gd.Error(error_msg)
+        
+    
+    def handle_follow_up(question: str, chat_history):
+        """Handles follow up questions using global variable"""
+        global follow_up_service
+        if follow_up_service and question.strip():
+            try:
+                response = follow_up_service.process_follow_up_question(question)
+                chat_history.append([question, response])
+                return "", chat_history
+            
+            except Exception as e:
+                chat_history.append([question, f"Error: {str(e)}"])
+                return "", chat_history
+            
+        return question, chat_history
     
 
     def enable_inputs(name: str) -> Tuple[gd.update, gd.update]:
@@ -168,6 +205,24 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 voice_output = gd.Audio(label=lang_manager.get_text("voice_response_label"), type="numpy")
                 prescription_output = gd.Textbox(label=lang_manager.get_text("prescription_label"), lines=8)
                 download_btn = gd.File(label=lang_manager.get_text("download_prescription_label"), file_count="single")
+
+                # Follow-up section (initially hidden)
+                with gd.Column(visible=False) as follow_up_section:
+                    gd.Markdown("### 💬 Ask Follow-up Questions")
+
+                    chatbot = gd.Chatbot(
+                        label="Follow-up Chat with Doctor",
+                        height=300,
+                        show_label=True
+                    )
+
+                    follow_up_input = gd.Textbox(
+                        label="Ask about your diagnosis or prescription",
+                        placeholder="e.g., How long should I take this medication?",
+                        lines=2
+                    )
+
+                    follow_up_btn = gd.Button("Ask Question", variant="secondary")
         
         # Submit button
         submit_btn = gd.Button(lang_manager.get_text("analyze_button"), variant="primary")
@@ -197,7 +252,20 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         submit_btn.click(
             handle_submission,
             inputs=[name_box, audio_input, image_input],
-            outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn]
+            outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn, follow_up_section]
+        )
+
+        # Follow-up chat functionality
+        follow_up_btn.click(
+            handle_follow_up,
+            inputs=[follow_up_input, chatbot],
+            outputs=[follow_up_input, chatbot]
+        )
+        
+        follow_up_input.submit(
+            handle_follow_up,
+            inputs=[follow_up_input, chatbot],
+            outputs=[follow_up_input, chatbot]
         )
     
     return interface

@@ -239,3 +239,54 @@ class HealthIntuitService(MedicalAnalysisService):
             
         except Exception as e:
             raise Exception(f"Medical analysis failed: {str(e)}")
+        
+
+class FollowUpService:
+    """Handles follow-up conversations after initial diagnosis"""
+    
+    def __init__(self, config, lang_manager):
+        self.config = config
+        self.lang_manager = lang_manager
+        self.conversation_history = []
+    
+    def initialize_follow_up(self, diagnosis: str, prescription: str, patient_name: str):
+        """Initializes follow-up context with initial diagnosis"""
+        self.conversation_history = [
+            {
+                "role": "system",
+                # !Improve prompt
+                "content": f"You are a doctor following up with {patient_name}. Initial diagnosis: {diagnosis}. Prescription given: {prescription}. Answer follow-up questions professionally and refer to emergency care when necessary."
+            }
+        ]
+    
+    def process_follow_up_question(self, question: str) -> str:
+        """Process follow-up questions with context"""
+        try:
+            # Adds user question to conversation history
+            self.conversation_history.append({
+                "role": "user",
+                "content": question
+            })
+            
+            from groq import Groq
+            client = Groq(api_key=self.config.GROQ_API_KEY)
+            
+            response = client.chat.completions.create(
+                messages=self.conversation_history,
+                model=self.config.LLM_MODEL,
+                temperature=0.3,
+                max_tokens=500
+            )
+            
+            follow_up_response = response.choices[0].message.content
+            
+            # Add AI response to conversation history
+            self.conversation_history.append({
+                "role": "assistant", 
+                "content": follow_up_response
+            })
+            
+            return follow_up_response
+            
+        except Exception as e:
+            raise Exception(f"Follow-up processing failed: {str(e)}")
