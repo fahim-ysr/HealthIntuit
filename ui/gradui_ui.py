@@ -7,6 +7,17 @@ from config.languages import get_language_manager
 def create_interface(process_function: Callable) -> gd.Blocks:
     """Creates Gradio UI with multilingual support"""
     lang_manager = get_language_manager()
+
+    # JavaScript to set light mode as default
+    default_light_js = """
+    function() {
+        const url = new URL(window.location);
+        if (!url.searchParams.has('__theme')) {
+            url.searchParams.set('__theme', 'light');
+            window.location.href = url.href;
+        }
+    }
+    """
     
     def handle_submission(name: str, audio_path: str, image_path: str) -> Tuple[str, str, Any, str, str]:
         """Handles form submission with error handling"""
@@ -50,7 +61,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             ]
 
     
-    with gd.Blocks(theme=gd.themes.Ocean()) as interface:   #Theme: Ocean
+    with gd.Blocks(theme=gd.themes.Ocean(), js= default_light_js) as interface:   #Theme: Ocean
         #  Compact language selector at top-right
         with gd.Row():
             gd.HTML("")  # Spacer
