@@ -104,7 +104,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
 
 
     def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str, gd.update]:
-        """Handles form submission and enables follow up chat button"""
+        """Handles form submission and enables follow up chat button (Emergency Detection Enabled)"""
         
         try:
             # Extracts file paths from uploaded files
@@ -118,24 +118,45 @@ def create_interface(process_function: Callable) -> gd.Blocks:
 
             result = process_function(name, audio_path, image_paths)
 
-            # Initializes follow-up service with context and stores in global variable (Since this function only supports 6 inputs)
-            global follow_up_service
-            follow_up_service = FollowUpService(get_config(), lang_manager)
+            # Handling emergency cases differently
+            if result.get("is_emergency", False):
+                # For emergencies
+                emergency_analysis= result.get("emergency_analysis", {})
+                confidence= emergency_analysis.get("confidence_score", 0)
+                emergency_type= emergency_analysis.get("emergency_type", 'unknown')
 
-            follow_up_service.initialize_follow_up(
-                result["diagnosis"],
-                result["prescription_text"],
-                name
-            )
+                emergency_diagnosis= f"MEDICAL EMERGENCY DETECTED \nType: {emergency_type.upper()}\nConfidence: {confidence}%\n\n{result['diagnosis']}"
+
+                # Doesn't initialize follow-ups for emergency cases
+                return (
+                    result["transcription"],
+                    emergency_diagnosis,
+                    result["voice_response"],
+                    result["prescription_text"],
+                    result["prescription_file"],
+                    gd.update(visible=False)  # Don't show chat for emergencies
+                    )
             
-            return (
-                result["transcription"],
-                result["diagnosis"],
-                result["voice_response"],
-                result["prescription_text"],
-                result["prescription_file"],
-                gd.update(visible=True),     # Shows up the follow up section after successful completion
-            )
+            else:
+
+                # Initializes follow-up service with context and stores in global variable (Since this function only supports 6 inputs)
+                global follow_up_service
+                follow_up_service = FollowUpService(get_config(), lang_manager)
+
+                follow_up_service.initialize_follow_up(
+                    result["diagnosis"],
+                    result["prescription_text"],
+                    name
+                )
+                
+                return (
+                    result["transcription"],
+                    result["diagnosis"],
+                    result["voice_response"],
+                    result["prescription_text"],
+                    result["prescription_file"],
+                    gd.update(visible=True),     # Shows up the follow up section after successful completion
+                )
         
         except Exception as e:
             error_msg = lang_manager.get_text("error_analysis_failed").format(error=str(e))

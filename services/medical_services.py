@@ -11,6 +11,7 @@ from core.fundamentals import image_encode, analyze_image_and_query
 from core.input_voice import speech_to_text
 from core.output_voice import text_to_speech, text_to_speech_elevenlabs
 from config.languages import get_language_manager
+from services.emergency_detection import EmergencyDetectionService
 
 
 class MedicalAnalysisService(ABC):
@@ -23,13 +24,14 @@ class MedicalAnalysisService(ABC):
 
 
 class HealthIntuitService(MedicalAnalysisService):
-    """Performs Medical Analysis"""
+    """Performs Medical Analysis with Emergency Detection"""
     
 
     # Constructor function
     def __init__(self):
         self.config = get_config()
         self.lang_manager = get_language_manager()
+        self.emergency_service = EmergencyDetectionService(self.config)
     
 
     def _validate_inputs(self, name: str, audio_path: str, image_paths) -> None:
@@ -213,7 +215,7 @@ class HealthIntuitService(MedicalAnalysisService):
     
 
     def process_patient_query(self, name: str, audio_path: str, image_paths) -> Dict[str, Any]:
-        """Main processing pipeline"""
+        """Main processing pipeline with AI emergency detection"""
         self._validate_inputs(name, audio_path, image_paths)
         
         try:
@@ -222,24 +224,69 @@ class HealthIntuitService(MedicalAnalysisService):
             
             # Step 2: Analyzes image with transcription
             diagnosis = self._analyze_medical_images(image_paths, transcription)
+
+            # Step 3: AI Emergency Detection: Critical Safety Check
+            is_emergency, emergency_message, emergency_analysis= self.emergency_service.detect_emergency(transcription, diagnosis)
+
+            # Step 4: Handles emergency cases with detailed analysis
+            if is_emergency:
+                # For emergencies, override normal prescription with emergency instruction
+                confidence= emergency_analysis.get("confidence_score", 0)
+                emergency_type= emergency_analysis.get("emergency_type", "unknown")
+
+                prescription_text= emergency_message
+                prescription_path= self._save_emergency_prescription(emergency_message, name)
+
+                # Generates urgent voice response
+                urgent_diagnosis= f"{emergency_message}\n\nDetailed Analysis: {diagnosis}"
+                sample_rate, audio_data = self._generate_voice_response(emergency_message)
+
+                return {
+                    "transcription": transcription,
+                    "diagnosis": urgent_diagnosis,
+                    "voice_response": (sample_rate, audio_data),
+                    "prescription_text": prescription_text,
+                    "prescription_file": prescription_path,
+                    "is_emergency": True,
+                    "emergency_analysis": emergency_analysis
+                    }
+            else:
             
-            # Step 3: Generates doctor's voice response
-            sample_rate, audio_data = self._generate_voice_response(diagnosis)
-            
-            # Step 4: Generates doctor's prescription
-            prescription_text, prescription_path = self._generate_prescription(diagnosis, name)
-            
-            return {
-                "transcription": transcription,
-                "diagnosis": diagnosis,
-                "voice_response": (sample_rate, audio_data),
-                "prescription_text": prescription_text,
-                "prescription_file": prescription_path
-            }
+                # Step 5: Generates doctor's voice response
+                sample_rate, audio_data = self._generate_voice_response(diagnosis)
+                
+                # Step 6: Generates doctor's prescription
+                prescription_text, prescription_path = self._generate_prescription(diagnosis, name)
+                
+                return {
+                    "transcription": transcription,
+                    "diagnosis": diagnosis,
+                    "voice_response": (sample_rate, audio_data),
+                    "prescription_text": prescription_text,
+                    "prescription_file": prescription_path,
+                    "is_emergency": False,
+                    "emergency_analysis": emergency_analysis
+                }
             
         except Exception as e:
             raise Exception(f"Medical analysis failed: {str(e)}")
         
+    def _save_emergency_prescription(self, emergency_message: str, patient_name: str) -> str:
+        """Saves emergency instructions as prescription file"""
+        try:
+            self.config.PRESCRIPTION_DIR.mkdir(parents=True, exist_ok=True)
+            safe_name = "".join(c if c.isalnum() else "_" for c in patient_name)
+            filename = f"EMERGENCY_ALERT_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            prescription_path = self.config.PRESCRIPTION_DIR / filename
+
+            with open(prescription_path, "w", encoding='utf-8') as f:
+                f.write(emergency_message)
+            
+            return str(prescription_path)
+            
+        except Exception as e:
+            raise Exception(f"Emergency file generation failed: {str(e)}")
+
 
 class FollowUpService:
     """Handles follow-up conversations after initial diagnosis"""
