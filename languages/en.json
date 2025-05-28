@@ -4,6 +4,9 @@
   "language_selector": "Language",
   "full_name_label": "Full Name (required)",
   "full_name_placeholder": "Enter your full name here",
+  "date_of_birth_label": "Date of Birth",
+  "address_label": "Address",
+  "address_placeholder": "Street Address, City, Province, Postal Code",
   "audio_input_label": "Describe your concern (voice)",
   "image_input_label": "Upload relevant medical images (multiple allowed)",
   "transcribed_query_label": "Transcribed Patient Query",
@@ -20,5 +23,5 @@
   "call_911_immediately": "⚠️ CALL 911 IMMEDIATELY ⚠️",
   "emergency_disclaimer": "This application is for educational purposes only and does not replace professional emergency medical care.",
   "medical_prompt": "Please act as a professional doctor, I know you are not but this is for educational purposes. Now, I am in the image and what's happening to me in this image? Do you find anything wrong with it medically? If you make a differential, suggest some remedies for them. Do not add any numbers or special characters in your response. Your response should be in one long paragraph. Also always answer as if you are talking to a real person. Do not say 'In the image I see' but say 'So what I see, I presume you have .... ' Don't respond as an AI model in markdown, your answer should mimic that of an actual doctor not an AI bot, Keep your answer concise and avoid asterisk. No preamble, start your answer right away please",
-  "prescription_prompt": "Please act as a professional doctor, I know you are not but this is for educational purposes. Convert this medical analysis into a formal prescription format: {diagnosis}\n\nFormat as:\nPatient Name: {patient_name}\nDate: {current_date}\n\nDiagnosis: [Brief diagnosis]\n\nPrescription:\n- Medication 1: [Dosage instructions]\n- Medication 2: [Dosage instructions]\n- Topical Treatment: [Application instructions]\n\nRecommendations:\n- [Lifestyle advice]\n- [Follow-up schedule]\n\nDiagnosed by ⚕️HealthIntuit\n\n⚠️ DISCLAIMER: Educational use only. Not valid for medical treatment.\n\nUse bullet points, avoid markdown, and keep it clinically precise. No preamble, start your answer right away please"
+  "prescription_prompt": "Please act as a professional doctor, I know you are not but this is for educational purposes. Convert this medical analysis into a formal prescription format: {diagnosis}\n\nFormat as: Diagnosed by ⚕️HealthIntuit\n\n⚠️ DISCLAIMER: This is a demo. Not valid for medical treatment.\n\nPatient: {patient_name}\nDOB: {patient_dob}\nAddress: {patient_address}\n\nRx:\n [Medication 1]: [Dosage instructions]\n [Medication 2]: [Dosage instructions]\n[Topical Treatment]: [Application instructions]\n\nDiagnosis: [Brief diagnosis]\n\nRecommendations:\n- [Lifestyle advice]\n- [Follow-up schedule]\n\nIssued by: ⚕️HealthIntuit\n\nProvide realistic medication recommendations based on the diagnosis. No preamble, start your answer right away please"
 }

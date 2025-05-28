@@ -92,7 +92,7 @@ class HealthIntuitService(MedicalAnalysisService):
             french_count = sum(1 for word in words if word in french_indicators)
             english_count = sum(1 for word in words if word in english_indicators)
             
-            # Determine language based on indicator counts
+            # Determines language based on indicator counts
             if french_count > english_count and french_count > 2:
                 return "fr"
             elif english_count > french_count and english_count > 2:
@@ -117,7 +117,7 @@ class HealthIntuitService(MedicalAnalysisService):
 
             combined_analysis= []
 
-            # Get current language for consistent prompts
+            # Gets current language for consistent prompts
             current_lang = self.lang_manager.current_language
             localized_prompt = self.config.get_medical_prompt()
 
@@ -125,7 +125,7 @@ class HealthIntuitService(MedicalAnalysisService):
                 try:
                     encoded_image = image_encode(image_path)
 
-                    # Create language-specific prompt
+                    # Creates language-specific prompt
                     if current_lang == "fr":
                         image_specific_query = f"{localized_prompt}\n\nImage {i} de {len(image_paths)}: {query}"
                     else:
@@ -138,15 +138,15 @@ class HealthIntuitService(MedicalAnalysisService):
                     )
                     
                     if current_lang == "fr":
-                        combined_analysis.append(f"**Analyse pour l'Image {i}:**\n{analysis}")
+                        combined_analysis.append(f"Analyse pour l'Image {i}:\n{analysis}")
                     else:
-                        combined_analysis.append(f"**Analysis for Image {i}:**\n{analysis}")
+                        combined_analysis.append(f"Analysis for Image {i}:\n{analysis}")
             
                 except Exception as e:
                     if current_lang == "fr":
-                        combined_analysis.append(f"**Erreur lors de l'analyse de l'Image {i}:** {str(e)}")
+                        combined_analysis.append(f"Erreur lors de l'analyse de l'Image {i}: {str(e)}")
                     else:
-                        combined_analysis.append(f"**Error analyzing Image {i}:** {str(e)}")
+                        combined_analysis.append(f"Error analyzing Image {i}: {str(e)}")
                     
             # Combines all analyses
             full_analysis = "\n\n".join(combined_analysis)
@@ -200,8 +200,8 @@ class HealthIntuitService(MedicalAnalysisService):
             current_lang = self.lang_manager.current_language
             
             # Generates TTS
-            # text_to_speech(response=text, path=str(output_path), lang=current_lang)    # General TTS
-            text_to_speech_elevenlabs(response=text, path=str(output_path), lang= current_lang)   # ElevenLabs TTS
+            text_to_speech(response=text, path=str(output_path), lang=current_lang)    # General TTS
+            # text_to_speech_elevenlabs(response=text, path=str(output_path), lang= current_lang)   # ElevenLabs TTS
             
             # Verifies file was created
             if not output_path.exists():
@@ -227,19 +227,19 @@ class HealthIntuitService(MedicalAnalysisService):
             raise Exception(f"Doctor's voice generation failed: {str(e)}")
         
     
-    def _generate_prescription(self, diagnosis: str, patient_name: str) -> Tuple[str, str]:
-        """Generates formal prescription with localized prompt"""
+    def _generate_prescription(self, diagnosis: str, patient_name: str, patient_dob: str, patient_address: str) -> Tuple[str, str]:
+        """Generates formal Canadian prescription with complete patient information"""
         try:
             self.config.PRESCRIPTION_DIR.mkdir(parents=True, exist_ok=True)
             
-            current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            current_date = datetime.now().strftime("%B %d, %Y")  # Canadian date format
 
             # ADDED DEBUG LOGGING
             print(f"DEBUG: Patient name received: '{patient_name}'")
             print(f"DEBUG: Current language: {self.lang_manager.current_language}")
             
-            # Uses localized prescription prompt
-            prompt = self.config.get_prescription_prompt(diagnosis, patient_name, current_date)
+            # Use localized Canadian prescription prompt
+            prompt = self.config.get_prescription_prompt(diagnosis, patient_name, patient_dob, patient_address, current_date)
 
             # ADDED MORE DEBUG LOGGING
             print(f"DEBUG: Generated prompt contains: {prompt[:200]}...")
@@ -259,9 +259,9 @@ class HealthIntuitService(MedicalAnalysisService):
 
             prescription_text = response.choices[0].message.content
             
-            # Saves prescription file
-            safe_name = "".join(c if c.isalnum() else "_" for c in patient_name)
-            filename = f"prescription_{safe_name}_{datetime.now().strftime('%Y%m%d')}.txt"
+            # Saves prescription file (Canadian format)
+            safe_name = "".join(c if c.isalnum() else "_" for c in patient_name) if patient_name else "unknown_patient"
+            filename = f"prescription_canadian_{safe_name}_{datetime.now().strftime('%Y%m%d')}.txt"
             prescription_path = self.config.PRESCRIPTION_DIR / filename
             
             with open(prescription_path, "w", encoding='utf-8') as f:
@@ -273,7 +273,7 @@ class HealthIntuitService(MedicalAnalysisService):
             raise Exception(f"Prescription generation failed: {str(e)}")
     
 
-    def process_patient_query(self, name: str, audio_path: str, image_paths) -> Dict[str, Any]:
+    def process_patient_query(self, name: str, dob: str, address: str, audio_path: str, image_paths) -> Dict[str, Any]:
         """Main processing pipeline with AI emergency detection"""
         self._validate_inputs(name, audio_path, image_paths)
         
@@ -321,7 +321,7 @@ class HealthIntuitService(MedicalAnalysisService):
                 sample_rate, audio_data = self._generate_voice_response(diagnosis)
                 
                 # Step 6: Generates doctor's prescription
-                prescription_text, prescription_path = self._generate_prescription(diagnosis, name)
+                prescription_text, prescription_path = self._generate_prescription(diagnosis, name, dob, address)
                 
                 return {
                     "transcription": transcription,

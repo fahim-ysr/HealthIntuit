@@ -10,7 +10,7 @@ from config.languages import get_language_manager
 class AppConfig:
     """Centralized Config Management"""
     
-    # ElevenLabs Premium Voice IDs (using default_factory)
+    # ElevenLabs TTS (using voice_id)
     ELEVENLABS_VOICES: Dict[str, Dict[str, str]] = field(default_factory=lambda: {
         "en": {
             "voice_id": "cgSgspJ2msm6clMCkdW9",
@@ -56,13 +56,15 @@ class AppConfig:
         """Gets medical prompt for medical analysis and recommendation"""
         return self.lang_manager.get_text("medical_prompt")
 
-    def get_prescription_prompt(self, diagnosis: str, patient_name: str, current_date: str) -> str:
+    def get_prescription_prompt(self, diagnosis: str, patient_name: str, patient_dob: str, patient_address: str, current_date: str) -> str:
         """Gets prescription prompt"""
         template = self.lang_manager.get_text("prescription_prompt")
         return template.format(
-            diagnosis=diagnosis,
-            patient_name=patient_name,
-            current_date=current_date
+            diagnosis= diagnosis,
+            patient_name= patient_name,
+            patient_dob= patient_dob,
+            patient_address= patient_address,
+            current_date= current_date
         )
 
     # This function ensures the directories exist

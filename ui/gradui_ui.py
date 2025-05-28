@@ -154,7 +154,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     """
 
 
-    def handle_submission(name: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str, gd.update]:
+    def handle_submission(name: str, dob: str, address: str, audio_path: str, image_files) -> Tuple[str, str, Any, str, str, gd.update]:
         """Handles form submission and enables follow up chat button (Emergency Detection Enabled)"""
         
         try:
@@ -167,7 +167,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             else:
                 image_paths = []
 
-            result = process_function(name, audio_path, image_paths)
+            result = process_function(name, dob, address, audio_path, image_paths)
 
             # Handling emergency cases differently
             if result.get("is_emergency", False):
@@ -231,12 +231,27 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     
 
     def enable_inputs(name: str) -> Tuple[gd.update, gd.update]:
-        """Enables/Disables inputs based on name entry"""
-        is_enabled = bool(name and name.strip())
+        """Enables DOB and Address inputs when name is entered"""
+
+        has_name = bool(name and name.strip())
         return (
-            gd.update(interactive=is_enabled),
-            gd.update(interactive=is_enabled)
+            gd.update(interactive=has_name),  # dob_box
+            gd.update(interactive=has_name)   # address_box
         )
+
+    def enable_audio_image_inputs(name: str, dob: str, address: str) -> Tuple[gd.update, gd.update]:
+        """Enable audio and image inputs only when all patient info is complete"""
+
+        has_name = bool(name and name.strip())
+        has_dob = bool(dob and dob.strip())
+        has_address = bool(address and address.strip())
+        all_filled = has_name and has_dob and has_address
+        
+        return (
+            gd.update(interactive=all_filled),  # audio_input
+            gd.update(interactive=all_filled)   # image_input
+        )
+
     
     def update_language(lang_code: str):
         """Updates language"""
@@ -285,14 +300,35 @@ def create_interface(process_function: Callable) -> gd.Blocks:
             f"<p style='text-align:center; color: #666;'>{lang_manager.get_text('app_subtitle')}</p>"
         )
         
-        # Name input box
-        name_box = gd.Textbox(
-            label=lang_manager.get_text("full_name_label"),
-            placeholder=lang_manager.get_text("full_name_placeholder")
+
+        with gd.Row():
+
+            # Name input box
+            with gd.Column(scale=1):
+                name_box = gd.Textbox(
+                    label=lang_manager.get_text("full_name_label"),
+                    placeholder=lang_manager.get_text("full_name_placeholder")
+                    )
+                
+            # DOB input box
+            with gd.Column(scale=1):
+                dob_box= gd.Textbox(
+                    label= lang_manager.get_text("date_of_birth_label"),
+                    placeholder= "YYYY-MM-DD",
+                    interactive= False
+                )
+        
+        # Address input Box
+        address_box = gd.Textbox(
+            label= lang_manager.get_text("address_label"),
+            placeholder= lang_manager.get_text("address_placeholder"),
+            lines= 2,
+            interactive= False
         )
         
         # Main UI
         with gd.Row():
+
             # Input column
             with gd.Column(scale=2):
                 audio_input = gd.Audio(
@@ -382,15 +418,35 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                     doctors_response, voice_output, prescription_output, download_btn, submit_btn]
         )
         
+        # Enable DOB and address when name is entered
         name_box.change(
             enable_inputs,
-            inputs=name_box,
+            inputs=[name_box],
+            outputs=[dob_box, address_box]
+        )
+
+        # Enable audio/image when all patient info is complete
+        name_box.change(
+            enable_audio_image_inputs,
+            inputs=[name_box, dob_box, address_box],
             outputs=[audio_input, image_input]
+        )
+
+        dob_box.change(
+            enable_audio_image_inputs,
+            inputs= [name_box, dob_box, address_box],
+            outputs= [audio_input, image_input]
+        )
+
+        address_box.change(
+            enable_audio_image_inputs,
+            inputs= [name_box, dob_box, address_box],
+            outputs= [audio_input, image_input]
         )
         
         submit_btn.click(
             handle_submission,
-            inputs=[name_box, audio_input, image_input],
+            inputs=[name_box, dob_box, address_box, audio_input, image_input],
             outputs=[stt_output, doctors_response, voice_output, prescription_output, download_btn, chat_toggle_btn]
         )
 
