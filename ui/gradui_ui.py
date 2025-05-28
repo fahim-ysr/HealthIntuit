@@ -18,21 +18,24 @@ def create_interface(process_function: Callable) -> gd.Blocks:
 
     # JavaScript to set light mode as default
     default_light_js = """
+
     function() {
-        const url = new URL(window.location);
-        if (!url.searchParams.has('__theme')) {
-            url.searchParams.set('__theme', 'light');
-            window.location.href = url.href;
+    const url = new URL(window.location);
+    if (!url.searchParams.has('__theme')) {
+        url.searchParams.set('__theme', 'light');
+        window.location.href = url.href;
         }
     }
+
     """
     
     # For image presentation
     custom_css = """
+
     #image-gallery {
-        border: 2px dashed #e5e7eb;
-        border-radius: 8px;
-        padding: 10px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
     }
 
     #image-gallery .grid-wrap {
@@ -48,8 +51,8 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     #image-gallery img:hover {
         transform: scale(1.05);
     }
-    
-    /* Fixed Popup Modal Styles - Remove display: flex !important */
+
+    /* Fixed Popup Modal Styles */
     .popup-overlay {
         position: fixed !important;
         top: 0 !important;
@@ -58,12 +61,11 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         height: 100% !important;
         background-color: rgba(0, 0, 0, 0.5) !important;
         z-index: 1000 !important;
-        /* REMOVED: display: flex !important; */
         align-items: center !important;
         justify-content: center !important;
     }
 
-    /* Add this new rule for when popup is visible */
+    /* Show popup when visible */
     .popup-overlay[style*="display: block"] {
         display: flex !important;
         align-items: center !important;
@@ -74,12 +76,16 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         background: white !important;
         border-radius: 12px !important;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-        width: 500px !important;
-        max-height: 600px !important;
+        width: 800px !important;
+        height: 700px !important;
+        max-height: 85vh !important;
         padding: 20px !important;
-        max-width: 90vw !important;
+        max-width: 95vw !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
+    /* Chat toggle button styles */
     .chat-toggle-btn {
         position: fixed !important;
         bottom: 20px !important;
@@ -100,6 +106,51 @@ def create_interface(process_function: Callable) -> gd.Blocks:
     .chat-toggle-btn:hover {
         transform: scale(1.1) !important;
     }
+
+    /* Better chatbot message display */
+    .popup-chatbot .gradio-chatbot {
+        flex: 1 !important;
+        height: 100% !important;
+        min-height: 500px !important;
+        margin: 10px 0 !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 8px !important;
+    }
+
+    /* Fix message bubble styling */
+    .gradio-chatbot .message-wrap {
+        padding: 8px 12px !important;
+        margin: 4px 0 !important;
+        border-radius: 8px !important;
+    }
+
+    .gradio-chatbot .user {
+        background-color: #e3f2fd !important;
+        margin-left: 20% !important;
+    }
+
+    .gradio-chatbot .bot {
+        background-color: #f5f5f5 !important;
+        margin-right: 20% !important;
+    }
+
+    /* Ensure input area is properly sized */
+    .popup-chatbot .gradio-textbox {
+        flex-shrink: 0 !important;
+        margin-top: 10px !important;
+        min-height: 40px !important;
+    }
+
+    /* Font size adjustments */
+    .gradio-chatbot .message {
+        font-size: 0.85em !important;
+    }
+
+    .gradio-chatbot .message p {
+        font-size: 0.85em !important;
+        margin: 0.5em 0 !important;
+    }
+
     """
 
 
@@ -169,7 +220,7 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         if follow_up_service and question.strip():
             try:
                 response = follow_up_service.process_follow_up_question(question)
-                chat_history.append([question, response])
+                chat_history.append([question, response])  # Simple list format
                 return "", chat_history
             
             except Exception as e:
@@ -300,15 +351,20 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 
                 chatbot = gd.Chatbot(
                     label="Chat with Doctor",
-                    height=350,
                     show_label=False,
+                    elem_classes=["follow-up-chat"],
+                    height= 900
                 )
-                follow_up_input = gd.Textbox(
-                    label="",
-                    placeholder="Ask about your diagnosis or prescription...",
-                    lines=2
-                )
-                follow_up_btn = gd.Button("Send", variant="primary")
+
+                with gd.Row():
+                    follow_up_input = gd.Textbox(
+                        label= "",
+                        placeholder= "Ask about your diagnosis or prescription...",
+                        lines= 1, # Enables 'Enter' key submission
+                        scale= 4
+                    )
+
+                    follow_up_btn = gd.Button("Send", variant="primary", scale= 1)
         
         # Event handlers
         
