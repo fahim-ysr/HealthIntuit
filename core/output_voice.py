@@ -6,17 +6,17 @@ from elevenlabs.client import ElevenLabs
 import subprocess
 from pydub import AudioSegment
 import platform
+from config.settings import get_config
 
 
 # !Setting up Text-to-Speech Model (Substitute of Elevenlabs)
 
 def text_to_speech(response, path, lang="en"):
-    language= "en"
     audio_obj = gTTS(
         text= response,
         lang= lang,
         # For Canadian Accent
-        tld='ca' if language == "en" else "com" ,
+        tld='ca' if lang == "en" else "com" ,
         slow= False
     )
 
@@ -55,23 +55,55 @@ KEY = os.getenv("ELEVENLABS_API_KEY")
 
 def text_to_speech_elevenlabs(response, path, lang= "en"):
     client= ElevenLabs(api_key= KEY)
+    config = get_config()
 
-    voice_map= {
-        "en": "Jessica",
-        "fr": "Freya"
+    # voice_map= {
+    #     "en": "Jessica",
+    #     "fr": "Freya"
+    # }
+
+    # audio= client.generate(
+    #     text= response,
+    #     # voice= "Freya",
+    #     voice= voice_map.get(lang, "Jessica"),
+    #     output_format= "mp3_44100_128",
+    #     # Currently using the most lifelike model with rich emotional expression
+    #     model= "eleven_turbo_v2"
+    # )
+
+    voice_id_map = {
+        "en": "cgSgspJ2msm6clMCkdW9",
+        "fr": "K7gx0ylJdff0yjM2uVQS"
     }
 
-    audio= client.generate(
-        text= response,
-        # voice= "Freya",
-        voice= voice_map.get(lang, "Jessica"),
-        output_format= "mp3_44100_128",
-        # Currently using the most lifelike model with rich emotional expression
-        model= "eleven_turbo_v2"
-    )
-    
-    # Saves the audio in the file path
-    elevenlabs.save(audio, path)
+    # Gets voice ID for current language
+    voice_id = voice_id_map.get(lang, voice_id_map["en"])
+
+    try:
+        # Premium API call with voice settings
+        audio = client.generate(
+            text=response,
+            voice=voice_id,  # Use voice ID instead of name
+            model="eleven_multilingual_v2",  # Premium multilingual model
+            voice_settings={
+                "stability": 0.75,
+                "similarity_boost": 0.85,
+                "style": 0.50,
+                "use_speaker_boost": True
+            },
+            output_format="mp3_44100_128"
+        )
+        
+        # Save the audio
+        elevenlabs.save(audio, path)
+        
+    except Exception as e:
+        print(f"ElevenLabs Premium TTS error: {e}")
+        
+        # Fallback to regular gTTS
+        print("Falling back to gTTS...")
+        text_to_speech(response, path, lang)
+        return
 
     # Converting MP3 to WAV for autoplay
     wav_path= path.replace(".mp3", ".wav")
