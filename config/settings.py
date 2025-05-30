@@ -32,13 +32,16 @@ class AppConfig:
 
     # Loads the local file containing API Keys
     def __init__(self):
-        load_dotenv(Path(".env.local"))
+        env_file = Path(".env.local")
+        if env_file.exists():
+            load_dotenv(env_file)
+
         self._create_directories()
         self.lang_manager = get_language_manager()
         
     # Loads API Keys
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
-    ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY")
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    ELEVENLABS_API_KEY: str = os.getenv("ELEVENLABS_API_KEY", "")
     
     # Models Used
     STT_MODEL: str = "whisper-large-v3-turbo"
