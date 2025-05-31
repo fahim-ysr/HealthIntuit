@@ -10,3 +10,5 @@ prescriptions
 temp
 .HEIC
 .jpeg
+.env
+.dockerignore

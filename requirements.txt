@@ -65,7 +65,6 @@ platformdirs==4.3.8
 prompt_toolkit==3.0.51
 ptyprocess==0.7.0
 pure_eval==0.2.3
-PyAudio==0.2.14
 pydantic==2.11.4
 pydantic_core==2.33.2
 pydub==0.25.1

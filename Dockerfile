@@ -7,6 +7,7 @@ WORKDIR /usr/src/app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
@@ -27,4 +28,4 @@ ENV GRADIO_SERVER_PORT="7860"
 EXPOSE 7860
 
 # Run the application
-CMD ["python", "app_deploy.py"]
+CMD ["python", "app.py"]
