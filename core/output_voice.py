@@ -60,9 +60,9 @@ def text_to_speech(response, path, lang="en"):
     # Saving audio object to the file path
     audio_obj.save(path)
 
-    # Autoplays the doctor's voice if not in Docker
-    if not _is_docker_env():
-        _play_audio_locally(path)
+    # # Autoplays the doctor's voice if not in Docker
+    # if not _is_docker_env():
+    #     _play_audio_locally(path)
 
 
 # !Setting up Text-to-Speech model using ElevenLabs api
@@ -129,9 +129,9 @@ def text_to_speech_elevenlabs(response, path, lang= "en"):
         text_to_speech(response, path, lang)
         return
     
-    # Autoplays the doctor's voice if not in Docker
-    if not _is_docker_env():
-        _play_audio_locally(path)
+    # # Autoplays the doctor's voice if not in Docker
+    # if not _is_docker_env():
+    #     _play_audio_locally(path)
 
 
 # # *Testing the text_to_speech_elevenlabs

@@ -188,7 +188,7 @@ class HealthIntuitService(MedicalAnalysisService):
     
     
 
-    def _generate_voice_response(self, text: str) -> Tuple[int, Any]:
+    def _generate_voice_response(self, text: str) -> Tuple[int, Any, str]:
         """Generates voice response from text (Text-To-Speech)"""
         try:
             # Ensures temp directory exists
@@ -217,10 +217,9 @@ class HealthIntuitService(MedicalAnalysisService):
             # Cleanup
             if temp_wav.exists():
                 os.remove(str(temp_wav))
-            if output_path.exists():
-                os.remove(str(output_path))
             
-            return sample_rate, audio_data
+            
+            return sample_rate, audio_data, str(output_path)
             
         except Exception as e:
             print(f"Voice generation error details: {str(e)}")
@@ -304,12 +303,13 @@ class HealthIntuitService(MedicalAnalysisService):
 
                 # Generates urgent voice response
                 urgent_diagnosis= f"{emergency_message}\n\nDetailed Analysis: {diagnosis}"
-                sample_rate, audio_data = self._generate_voice_response(emergency_message)
+                sample_rate, audio_data, audio_file_path = self._generate_voice_response(emergency_message)
 
                 return {
                     "transcription": transcription,
                     "diagnosis": urgent_diagnosis,
                     "voice_response": (sample_rate, audio_data),
+                    "audio_file_path": audio_file_path,
                     "prescription_text": prescription_text,
                     "prescription_file": prescription_path,
                     "is_emergency": True,
@@ -318,7 +318,7 @@ class HealthIntuitService(MedicalAnalysisService):
             else:
             
                 # Step 5: Generates doctor's voice response
-                sample_rate, audio_data = self._generate_voice_response(diagnosis)
+                sample_rate, audio_data, audio_file_path = self._generate_voice_response(diagnosis)
                 
                 # Step 6: Generates doctor's prescription
                 prescription_text, prescription_path = self._generate_prescription(diagnosis, name, dob, address)
@@ -327,6 +327,7 @@ class HealthIntuitService(MedicalAnalysisService):
                     "transcription": transcription,
                     "diagnosis": diagnosis,
                     "voice_response": (sample_rate, audio_data),
+                    "audio_file_path": audio_file_path,
                     "prescription_text": prescription_text,
                     "prescription_file": prescription_path,
                     "is_emergency": False,
