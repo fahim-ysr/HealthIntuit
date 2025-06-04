@@ -32,12 +32,33 @@ class AppConfig:
 
     # Loads the local file containing API Keys
     def __init__(self):
-        env_file = Path(".env.local")
+        env_file = Path("../.env.local")
         if env_file.exists():
+            print(f"✅ Loading environment from: {env_file.absolute()}")
             load_dotenv(env_file)
+        else:
+            print(f"⚠️  .env.local not found at: {env_file.absolute()}")
+            print("Trying to load from environment variables...")
 
         self._create_directories()
         self.lang_manager = get_language_manager()
+
+        # Validates API keys on initialization
+        self._validate_api_keys()
+
+
+    def _validate_api_keys(self):
+        """Validates if API keys are present"""
+        groq_key = os.getenv("GROQ_API_KEY")
+        elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
+
+        if not groq_key:
+            raise ValueError("GROQ_API_KEY is missing. Please check our .env.local file.")
+        if not elevenlabs_key:
+            raise ValueError("ELEVENLABS_API_KEY is missing. Please check your .env.local fie.")
+        
+        print("✅ All API keys validated successfully")
+
         
     # Loads API Keys
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
@@ -54,6 +75,7 @@ class AppConfig:
     TEMP_DIR: Path = Path.cwd() / "temp"
     # Path for prescription
     PRESCRIPTION_DIR: Path = Path.cwd() / "prescriptions"
+
 
     def get_medical_prompt(self) -> str:
         """Gets medical prompt for medical analysis and recommendation"""

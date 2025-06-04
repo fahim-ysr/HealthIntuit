@@ -71,7 +71,7 @@ def text_to_speech(response, path, lang="en"):
 from dotenv import load_dotenv
 from pathlib import Path
 
-env_file = Path(".env.local")
+env_file = Path("../.env.local")
 if env_file.exists():
     load_dotenv(env_file)
 

@@ -1,9 +1,5 @@
 # Importing Modules
-# pip install pyaudio
-# pip install ffmpeg
-# pip install speech recognition
-# pip install pydub
-
+import httpx
 import logging
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -72,32 +68,61 @@ audio_file = "patient_request.mp3"
                                                                          
 from dotenv import load_dotenv
 from pathlib import Path
-load_dotenv(Path(".env.local"))
-KEY = os.getenv("GROQ_API_KEY")
+load_dotenv(Path("../.env.local"))
+current_model = "whisper-large-v3-turbo"
 
 
 def speech_to_text(model, path, api_key, language="en"):
 
-    # Setting up Groq client
-    client = Groq(api_key= api_key)
+    # Debugging to check if API key is loaded
+    api_key = os.getenv("GROQ_API_KEY")
+    print(f"DEBUG: API key loaded: {'Yes' if api_key else 'No'}")
+    print(f"DEBUG: API key length: {len(api_key) if api_key else 0}")
 
-    # Encoding the file for transcription in binary
-    audio_file = open(path, "rb")
+    if not api_key or api_key.strip() == "":
+        raise Exception("GROQ_API_KEY is missing or empty. Please check your .env.local file.")
+    
+    try:
 
-    # Setting up transcription end point
-    transcription = client.audio.transcriptions.create(
-        model = current_model,
-        file= audio_file,
-        # Specifying English since it support multiple languages
-        language=language
-    )
+        # Setting up Groq client
+        client = Groq(api_key= api_key)
 
-    # Returns the extracted transcription of the audio file
-    return transcription.text
+        # Encoding the file for transcription in binary
+        audio_file = open(path, "rb")
+
+        # Setting up transcription end point
+        transcription = client.audio.transcriptions.create(
+            model = current_model,
+            file= audio_file,
+            language=language
+        )
+
+        # Returns the extracted transcription of the audio file
+        return transcription.text
+    
+    except Exception as e:
+        # raise Exception(f"API key usage failed during voice input stage: {str(e)}")
+        print(f"Normal connection failed: {e}")
+        print("Trying with SSL verification disabled...")
+
+        # Fallback with SSL disabled
+        client = Groq(
+            api_key= api_key,
+            http_client= httpx.Client(verify= False)
+        )
+
+        with open(audio_file, "rb") as file:
+            transcription = client.audio.transcriptions.create(
+                file= file,
+                model= model,
+                response_format= "text"
+            )
+        
+        return transcription
 
 
 # # *Testing*
 
 # # Importing OpenAI Whisper
-current_model = "whisper-large-v3-turbo"
+# current_model = "whisper-large-v3-turbo"
 # print(speech_to_text(model= current_model, path= audio_file, api_key= KEY))

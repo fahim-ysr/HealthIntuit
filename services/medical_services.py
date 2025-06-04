@@ -111,6 +111,14 @@ class HealthIntuitService(MedicalAnalysisService):
         """Analyzes multiple medical images with patient query"""
         try:
 
+            # Check API key before making request
+            api_key = self.config.GROQ_API_KEY
+            if not api_key or api_key.strip() == "":
+                raise Exception("GROQ_API_KEY is missing or empty. Please check your .env.local file.")
+            
+            if not api_key.startswith('gsk_'):
+                raise Exception(f"Invalid Groq API key format. Key should start with 'gsk_' but got: {api_key[:10]}...")
+
             # Converts single image to list for consistency
             if isinstance(image_paths, str):
                 image_paths= [image_paths]
@@ -160,7 +168,7 @@ class HealthIntuitService(MedicalAnalysisService):
 
                 # Generate summary using AI
                 from groq import Groq
-                client = Groq(api_key=self.config.GROQ_API_KEY)
+                client = Groq(api_key= api_key)
                 
                 message = [{
                     "role": "user", 
@@ -183,7 +191,11 @@ class HealthIntuitService(MedicalAnalysisService):
             return full_analysis
             
         except Exception as e:
-            raise Exception(f"Multiple image analysis failed: {str(e)}")
+            error_msg = str(e)
+            if "Illegal header value b'Bearer '" in error_msg:
+                raise Exception("API key is empty or invalid. Please check your GROQ_API_KEY in .env.local file.")
+            else:
+                raise Exception(f"Multiple image analysis failed: {str(e)}")
                 
     
     
