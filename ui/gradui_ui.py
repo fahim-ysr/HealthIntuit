@@ -171,23 +171,6 @@ def create_interface(process_function: Callable) -> gd.Blocks:
 
             result = process_function(name, dob, address, audio_path, image_paths)
 
-            # Creates autoplay HTML for fallback
-            autoplay_html= ""
-            if result.get("audio_file_path"):
-                
-                # Saves autio to accessible path
-                temp_dir = Path("/usr/src/app/temp")
-                audio_files = list(temp_dir.glob("doctors_response*.mp3"))
-
-                if audio_files:
-                    actual_audio_path= str(audio_files[0])
-                    autoplay_html= create_autoplay_audio(result["audio_file_path"])
-                
-                else:
-                    print("Warning: No audio file found in temp directory")
-                    autoplay_html= "<p>Audio file not found!</p"
-
-
             # Handling emergency cases differently
             if result.get("is_emergency", False):
                 # For emergencies
@@ -204,7 +187,6 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                     result["voice_response"],
                     result["prescription_text"],
                     result["prescription_file"],
-                    autoplay_html,
                     gd.update(visible=False)  # Don't show chat for emergencies
                     )
             
@@ -226,7 +208,6 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                     result["voice_response"],
                     result["prescription_text"],
                     result["prescription_file"],
-                    autoplay_html,
                     gd.update(visible=True),     # Shows up the follow up section after successful completion
                 )
         
@@ -300,45 +281,8 @@ def create_interface(process_function: Callable) -> gd.Blocks:
         else:
             return gd.update(value=[], visible=False)
         
-    
-    def create_autoplay_audio(audio_path: str) -> str:
-        """Creates HTML audio player with autoplay"""
 
-        try:
-
-            audio_file = Path(audio_path)
-
-            # Checks if file exists
-            if not audio_file.exists():
-                print(f"Audio file no found: {audio_path}")
-                return "<p>Audio file not available!</p>"
-
-            # Reads audio file and encode to base64
-            with open(audio_file, "rb") as audio_file_obj:
-                audio_bytes = audio_file_obj.read()
-                audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
-            
-            # Create HTML audio player with autoplay
-            audio_player = f'''
-            <audio controls autoplay style="width: 100%;">
-            <source src="data:audio/mpeg;base64,{audio_base64}" type="audio/mpeg">
-            Your browser does not support the audio element.
-            </audio>
-            <script>
-                setTimeout(() => {{
-                    let audio = document.querySelector('audio');
-                    if (audio) {{
-                        audio.play().catch(e => console.log('Autoplay prevented:', e));
-                    }}
-                }}, 500);
-            </script>
-            '''
-            return audio_player
-        
-        except Exception as e:
-            print(f"Error creating autoplay audio: {e}")
-            return f"<p>Audio playback error: {str(e)}</p>"
-
+    # User Interface
     
     with gd.Blocks(theme=gd.themes.Ocean(), js= default_light_js, css= custom_css) as interface:   #Theme: Ocean
         #  Compact language selector at top-right
@@ -424,7 +368,6 @@ def create_interface(process_function: Callable) -> gd.Blocks:
                 stt_output = gd.Textbox(label=lang_manager.get_text("transcribed_query_label"))
                 doctors_response = gd.Textbox(label=lang_manager.get_text("doctors_analysis_label"))
                 voice_output = gd.Audio(label=lang_manager.get_text("voice_response_label"), type="numpy", autoplay=True)
-                autoplay_voice = gd.HTML(label= "Doctor's Voice (Autoplay)")
                 prescription_output = gd.Textbox(label=lang_manager.get_text("prescription_label"), lines=8)
                 download_btn = gd.File(label=lang_manager.get_text("download_prescription_label"), file_count="single")
         
