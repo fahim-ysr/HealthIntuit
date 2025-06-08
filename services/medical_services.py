@@ -265,7 +265,7 @@ class HealthIntuitService(MedicalAnalysisService):
             response = client.chat.completions.create(
                 messages=message,
                 model=self.config.LLM_MODEL,
-                temperature=0.3
+                temperature=0.2     #Lowered for better accuracy
             )
 
             prescription_text = response.choices[0].message.content
