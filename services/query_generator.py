@@ -11,9 +11,9 @@ class QueryGenerator():
 
 
     def __init__(self):
-        self.config = get_config
-        self.lang_manager = get_language_manager
-        self.client = Groq(api_key=self.config.GROQ_API_KEY)
+        self.config = get_config()
+        self.lang_manager = get_language_manager()
+        self.client = Groq(api_key = self.config.GROQ_API_KEY)
 
 
     def generate_medical_queries(self, transcription:str, diagnosis:str, patient_data: Dict[str, str] = None) -> Dict[str, List[str]]:
@@ -195,10 +195,16 @@ class QueryGenerator():
         
         if primary_condition and primary_condition != "unknown":
             queries.extend([
-                f"{primary_condition} prevalence Canada {datetime.datetime.now().year}",
+                f"{primary_condition} prevalence Canada {datetime.now().year}",
                 f"{primary_condition} epidemiology Canadian population",
                 f"{primary_condition} treatment guidelines Canada health"
             ])
+
+        # Seasonal/temporal context
+        current_season = self.get_current_season()
+        queries.append(f"{primary_condition} {current_season} prevalence {region}")
+        
+        return queries
 
 
     def generate_visual_diagnosis_queries(self, entities: Dict[str, Any]) -> List[str]:
