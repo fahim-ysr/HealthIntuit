@@ -12,6 +12,7 @@ from core.input_voice import speech_to_text
 from core.output_voice import text_to_speech, text_to_speech_elevenlabs
 from config.languages import get_language_manager
 from services.emergency_detection import EmergencyDetectionService
+from services.query_generator import QueryGenerator
 
 
 class MedicalAnalysisService(ABC):
@@ -32,6 +33,7 @@ class HealthIntuitService(MedicalAnalysisService):
         self.config = get_config()
         self.lang_manager = get_language_manager()
         self.emergency_service = EmergencyDetectionService(self.config)
+        self.query_generator = QueryGenerator()
     
 
     def _validate_inputs(self, name: str, audio_path: str, image_paths) -> None:
@@ -301,6 +303,22 @@ class HealthIntuitService(MedicalAnalysisService):
             # Step 2: Analyzes image with transcription
             diagnosis = self._analyze_medical_images(image_paths, transcription)
 
+            # Step 2.5: Generates query for retrival
+            patient_data = {
+                "name": name,
+                "dob": dob,
+                "address": address
+            }
+
+            query_categories = self.query_generator.generate_medical_queries(transcription, diagnosis, patient_data)
+
+            # Formatting the query
+            search_queries = self.query_generator.format_queries_for_search(query_categories)
+
+            print(f"Generated {len(search_queries)} search queries")
+            for i, query in enumerate(search_queries[:5], 1):
+                print(f"Query {i}: {query}")
+
             # Step 3: AI Emergency Detection: Critical Safety Check
             is_emergency, emergency_message, emergency_analysis= self.emergency_service.detect_emergency(transcription, diagnosis)
 
@@ -325,7 +343,9 @@ class HealthIntuitService(MedicalAnalysisService):
                     "prescription_text": prescription_text,
                     "prescription_file": prescription_path,
                     "is_emergency": True,
-                    "emergency_analysis": emergency_analysis
+                    "emergency_analysis": emergency_analysis,
+                    "generated_queries": search_queries,
+                    "query_categories": query_categories
                     }
             else:
             
@@ -343,7 +363,9 @@ class HealthIntuitService(MedicalAnalysisService):
                     "prescription_text": prescription_text,
                     "prescription_file": prescription_path,
                     "is_emergency": False,
-                    "emergency_analysis": emergency_analysis
+                    "emergency_analysis": emergency_analysis,
+                    "generated_queries": search_queries,
+                    "query_categories": query_categories
                 }
             
         except Exception as e:
