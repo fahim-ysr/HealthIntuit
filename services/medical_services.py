@@ -13,6 +13,7 @@ from core.output_voice import text_to_speech, text_to_speech_elevenlabs
 from config.languages import get_language_manager
 from services.emergency_detection import EmergencyDetectionService
 from services.query_generator import QueryGenerator
+from services.semantic_retrival import SemanticRetrievalService, RetrievalContext
 
 
 class MedicalAnalysisService(ABC):
@@ -34,6 +35,7 @@ class HealthIntuitService(MedicalAnalysisService):
         self.lang_manager = get_language_manager()
         self.emergency_service = EmergencyDetectionService(self.config)
         self.query_generator = QueryGenerator()
+        self.retrival_service = SemanticRetrievalService()
     
 
     def _validate_inputs(self, name: str, audio_path: str, image_paths) -> None:
