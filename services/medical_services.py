@@ -1,6 +1,6 @@
 # Importing modules
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, List, Any
 from datetime import datetime
 import os
 from scipy.io import wavfile
@@ -35,7 +35,7 @@ class HealthIntuitService(MedicalAnalysisService):
         self.lang_manager = get_language_manager()
         self.emergency_service = EmergencyDetectionService(self.config)
         self.query_generator = QueryGenerator()
-        self.retrival_service = SemanticRetrievalService()
+        self.retrieval_service = SemanticRetrievalService()
     
 
     def _validate_inputs(self, name: str, audio_path: str, image_paths) -> None:
@@ -321,8 +321,47 @@ class HealthIntuitService(MedicalAnalysisService):
             for i, query in enumerate(search_queries[:5], 1):
                 print(f"Query {i}: {query}")
 
+            # Step 2.7: Semantic Retrieval
+            retrieval_context = RetrievalContext(
+                patient_demographics = {"dob": dob, "address": address},
+                geographical_region= "Canada",
+                current_season = self._get_current_season(),
+                image_analysis_results = {"has_visual_symptoms": "visual" in diagnosis.lower()},
+                medical_entities = self.query_generator.extract_medical_entities(transcription, diagnosis),
+                urgency_level = "routine"   # Will be updated based on emergency detection
+            )
+
+            # Performing retrival results
+            retrieved_documents = self.retrieval_service.retrieve_medical_information(
+                queries= search_queries[:10],
+                context= retrieval_context,
+                max_results= 15
+            )
+
+            retrieval_results = self.retrieval_service.format_retrieval_results(retrieved_documents)
+
+            print(f"Retrieved {len(retrieved_documents)} relevant medical documents")
+            print(f"Average credibility score: {retrieval_results['average_credibility']:.3f}")
+            
+
             # Step 3: AI Emergency Detection: Critical Safety Check
             is_emergency, emergency_message, emergency_analysis= self.emergency_service.detect_emergency(transcription, diagnosis)
+
+             # Update urgency level based on emergency detection
+            if is_emergency:
+                retrieval_context.urgency_level = "emergency"
+                # Re-retrieve with emergency context if needed
+                emergency_queries = [f"emergency {query}" for query in search_queries[:5]]
+                emergency_documents = self.retrieval_service.retrieve_medical_information(
+                    queries=emergency_queries,
+                    context=retrieval_context,
+                    max_results=10
+                )
+                
+                emergency_retrieval = self.retrieval_service.format_retrieval_results(emergency_documents)
+            
+            else:
+                emergency_retrieval = None
 
             # Step 4: Handles emergency cases with detailed analysis
             if is_emergency:
@@ -347,7 +386,10 @@ class HealthIntuitService(MedicalAnalysisService):
                     "is_emergency": True,
                     "emergency_analysis": emergency_analysis,
                     "generated_queries": search_queries,
-                    "query_categories": query_categories
+                    "query_categories": query_categories,
+                    "retrieval_results": retrieval_results,
+                    "emergency_retireval": emergency_retrieval,
+                    "evidence_summary": self._create_evidence_summary(retrieved_documents, is_emergency = True)
                     }
             else:
             
@@ -367,11 +409,45 @@ class HealthIntuitService(MedicalAnalysisService):
                     "is_emergency": False,
                     "emergency_analysis": emergency_analysis,
                     "generated_queries": search_queries,
-                    "query_categories": query_categories
+                    "query_categories": query_categories,
+                    "retrieval_results": retrieval_results,
+                    "evidence_summary": self._create_evidence_summary(retrieved_documents, is_emergency = False)
                 }
             
         except Exception as e:
             raise Exception(f"Medical analysis failed: {str(e)}")
+        
+
+    def _create_evidence_summary(self, documents: List, is_emergency: bool = False) -> Dict[str, Any]:
+        """Creates evidence based summary from retrieved documents"""
+        if not documents:
+            return {"summary": "No external evidence retrieved", "source_count": 0}
+        
+        # Categorize sources
+        clinical_guidelines = [doc for doc in documents if doc.source_type.value == "clinical_guideline"]
+        peer_reviewed = [doc for doc in documents if doc.source_type.value == "peer_reviewed"]
+        health_authorities = [doc for doc in documents if doc.source_type.value == "health_authority"]
+        
+        summary = {
+            "source_count": len(documents),
+            "clinical_guidelines": len(clinical_guidelines),
+            "peer_reviewed_articles": len(peer_reviewed),
+            "health_authority_sources": len(health_authorities),
+            "average_credibility": sum(doc.credibility_score for doc in documents) / len(documents),
+            "top_sources": [
+                {
+                    "title": doc.title,
+                    "source": doc.source,
+                    "credibility": doc.credibility_score,
+                    "relevance": doc.relevance_score
+                }
+                for doc in sorted(documents, key=lambda x: x.final_score, reverse=True)[:3]
+            ],
+            "evidence_strength": "high" if len(clinical_guidelines) + len(health_authorities) >= 3 else "moderate" if len(documents) >= 5 else "limited"
+        }
+        
+        return summary
+
         
     def _save_emergency_prescription(self, emergency_message: str, patient_name: str) -> str:
         """Saves emergency instructions as prescription file"""
@@ -388,6 +464,19 @@ class HealthIntuitService(MedicalAnalysisService):
             
         except Exception as e:
             raise Exception(f"Emergency file generation failed: {str(e)}")
+        
+
+    def _get_current_season(self) -> str:
+        """Gets current season for context"""
+        month = datetime.now().month
+        if month in [12, 1, 2]:
+            return "winter"
+        elif month in [3, 4, 5]:
+            return "spring"
+        elif month in [6, 7, 8]:
+            return "summer"
+        else:
+            return "fall"
 
 
 class FollowUpService:

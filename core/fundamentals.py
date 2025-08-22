@@ -48,7 +48,9 @@ def analyze_image_and_query(encoded_image, query, model):
 
     chat_complete = client.chat.completions.create(
         messages = message,
-        model = current_model
+        model = model,
+        temperature = 0.3,    # For better consistency
+        max_tokens = 1000
     )
 
     # Formatting output to extract response
@@ -63,6 +65,5 @@ def analyze_image_and_query(encoded_image, query, model):
 
 # image_path = "sample_dandruff.jpg"
 # encoded_image = image_encode(image_path)
-current_model = "meta-llama/llama-4-scout-17b-16e-instruct"
 # query = "Is there something wrong with my face?"
 # print(analyze_image_and_query(encoded_image= encoded_image, query= query, model= current_model))

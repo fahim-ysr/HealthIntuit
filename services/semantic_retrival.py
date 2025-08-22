@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 import requests
 import json
 from datetime import datetime, timedelta
@@ -13,7 +13,7 @@ from config.languages import get_language_manager
 
 class SourceType(Enum):
     """Types of medical information sources"""
-    CLINIC_GUIDELINE = "clinical_guideline"
+    CLINICAL_GUIDELINE = "clinical_guideline"
     PEER_REVIEWED = "peer_reviewed"
     MEDICAL_DATABASE = "medical_database"
     HEALTH_AUTHORITY = "health_authority"
@@ -21,6 +21,7 @@ class SourceType(Enum):
     NEWS_ARTICLE = "news_article"
 
 
+@dataclass
 class MedicalDocument:
     """Represents a retrieved medical document"""
     title: str
@@ -38,6 +39,7 @@ class MedicalDocument:
     semantic_concepts: List[str]
 
 
+@dataclass
 class RetrievalContext:
     """Context information for retreival"""
     patient_demographics: Dict[str, Any]
@@ -58,7 +60,7 @@ class SemanticRetrievalService:
 
         try:
             # For semantic search
-            self.semantic_model = SentenceTransformer("all-MiniLM-L6-v2")
+            self.semantic_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         except Exception as e:
             print(f"Warning: Could not load semantic model: {e}")
 
