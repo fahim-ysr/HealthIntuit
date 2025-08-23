@@ -13,3 +13,5 @@ temp
 .env
 .dockerignore
 .pem
+healthintuit_accessKeys
+healthintuit.pem
